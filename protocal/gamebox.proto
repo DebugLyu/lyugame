@@ -1,0 +1,219 @@
+package tutorial;
+
+//登陆请求
+message Reqlogin {
+	required string account = 1;
+	required string password = 2;
+}
+//登陆回复
+message Reslogin {
+	required int32 result = 1; // 登陆结果 0成功 1名字重复
+	required int32 id = 2;		//玩家唯一id
+	required string name = 3;	//玩家名
+	required int32 gold = 4; //金币数
+}
+
+// 注册请求
+message ReqRegister {
+	required string account = 1;//账号
+	required string password = 2;//密码
+}
+// 注册回复
+message ResRegister {
+	required int32 result = 1; // 注册结果
+}
+
+// 断开客户端连接
+message ToCloseClient {
+	required int32 type = 1; // 断开原因
+}
+
+message ToGoldChange {
+	required int32 gold = 1; // 金币变化
+}
+
+//进入房间
+message ReqEnterRoom {
+	required int32 roomid = 1; 		//房间id
+}
+
+//回复进入房间
+message ResEnterRoom {
+	required int32 result = 1;		//结果 0成功，1满员
+	required int32 roomid = 2;		
+}
+
+message ReqLeaveRoom {
+}
+
+//上庄申请
+message ReqBeBanker {
+	required int32 type = 1; //申请上庄类型 1普通上庄 2快速上庄
+}
+
+message ResBeBanker {
+	required int32 result = 1; //上庄回复
+}
+
+//广播房间队列变化
+message ResTuiBingQueueChange {
+	required int32 bankerid = 1;   //庄家id
+	required string bankername = 2; //庄家名字
+
+	message QueuePlayer {
+		required int32 playerid = 1; //玩家id
+        required string playername = 2;//玩家名字
+        required int32 type = 3;//玩家排队类型
+      }
+	repeated QueuePlayer queue = 3; //队列
+}
+
+//通知玩家 游戏状态改变
+message ToTuiBingGameState {
+	required int32 state = 1;   //游戏阶段
+}
+
+//询问庄家 是否开始
+message ToBankerBegin {
+}
+
+// 庄家确定游戏开始
+message ReqTuiBingBegin {
+}
+
+//下庄
+message ReqTuiBingUnbanker {
+}
+
+//下庄反馈
+message ResTuiBingUnbanker {
+	required int32 result = 1;
+}
+
+//离开队列
+message ReqTuibingLeaveQueue {
+}
+//离开队列 反馈
+message ResTuibingLeaveQueue {
+	required int32 result = 1;
+}
+
+// 开始游戏反馈
+message ResBankerBegin {
+}
+
+//询问是否续庄
+message ToKeepBanker {
+}
+
+//续庄申请
+message ReqKeepBanker {
+	required int32 iskeep = 1;   //0：继续 1：下庄
+	required int32 gold = 2;   //
+}
+
+// 续庄 反馈
+message ResKeepBanker {
+	required int32 result = 1;
+}
+
+// 玩家下注
+message ReqTuiBingBet {
+	required int32 pos = 1; 	//申请下注位置
+	required int32 gold = 2;
+}
+
+//广播下注通知
+message ResTuiBingBet {
+	required int32 result = 1;
+	required int32 id = 2;
+	required int32 pos = 3;
+	required int32 gold = 4;
+}
+
+//广播开牌
+message ToDealMajiang {
+	message majiang {
+		required int32 majiang1 = 1;
+        required int32 majiang2 = 2;
+    }
+	repeated majiang majiangs = 1; //麻将们 1 庄 2 南 3 天 4 北
+}
+
+//广播可压金币数
+message ToTuiBingBetGold {
+	required int32 gold = 1;
+}
+
+//广播房间信息 
+message ToTuibingBankerInfo {
+	required string name = 1;
+	required int32 id = 2;
+	required int32 gold = 3;
+	required int32 times = 4;
+}
+
+message ReqTuibingInfo {
+	
+}
+
+message ResTuibingInfo {
+	
+}
+
+//申请加金币
+message ReqAddGold {
+	required int32 gold = 1;
+}
+
+//////////////////////////////麻将相关///////////////////
+message ToMjRoomPlayerEnter {
+	required int32 id = 1;
+	required string name = 2;
+	required int32 gold = 3;
+	required int32 pos = 4;
+	required int32 headicon = 5;
+}
+
+message ToMjReady {
+}
+//申请准备游戏
+message ReqMJReady {
+}
+
+message ResMJReady {
+	repeated int32 pos = 1;//已经准备了的位置
+}
+// 提示客户端 有可选出牌类型 碰 杠 胡
+message ToMjSelected {
+	message SelectType {
+		required int32 state = 1; //2 碰 3 杠 4 暗杠  4 普通胡 5 对对胡
+		required int32 pai = 2;
+		required int32 pos = 3;
+	}
+	repeated SelectType states = 1;
+}
+// 起牌
+message ToMjGetMj {
+	required int32 pai = 1;
+}
+// 客户端申请出牌
+message ReqMjSendMj {
+	required int32 pai = 1;
+}
+// 出牌错误返回
+message ResMjSendMj {
+	required int32 result = 1;
+}
+// 通知客户端有人要牌
+message ToMjSmOneUse {
+}
+// 申请 特殊操作 碰 杠 胡
+message ReqMjOperate {
+	required int32 state = 1;
+	required int32 pai = 2;
+	required int32 pos = 3;
+}
+message ResMjOperate {
+	required int32 result = 1;
+}
