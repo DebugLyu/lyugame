@@ -11,7 +11,7 @@ local table_remove = table.remove
 
 -- player : player_id player_ws player_sn player_gold
 local player_list = {}
-
+local game_state_timer = 0
 local majiang = {0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9}
 
 local TuiBingState = {
@@ -41,7 +41,7 @@ local TuiBing = {
 		player_id = 0, 
 		player_ws = 0,
 		player_sn = 0, 
-		player_name = 0, 
+		player_name = "", 
 		banker_times = 0,
 		banker_gold = 0,
 		banker_state = PlayerState.Unknow,
@@ -62,6 +62,18 @@ function TuiBing:initGame()
 	self.bet_info = { [1] = {}, [2] = {}, [3] = {},}
 end
 
+function TuiBing:initBanker()
+	self.banker = {
+		player_id = 0, 
+		player_ws = 0,
+		player_sn = 0, 
+		player_name = "", 
+		banker_times = 0,
+		banker_gold = 0,
+		banker_state = PlayerState.Unknow,
+	}
+end
+
 function TuiBing:gameStart()
 	math.randomseed( os.time() )
 	self.running_time_ = 1
@@ -78,10 +90,14 @@ function TuiBing:gameStart()
 end
 
 -- 通知客户端游戏状态
-function TuiBing:sendGameState()
+function TuiBing:sendGameState( sn )
 	local toclient = {}
 	toclient.state = self.state
-	self:broatcast("ToTuiBingGameState", toclient)
+	if sn then
+		self:sendToPlayer( sn, "ToTuiBingGameState", toclient )
+	else
+		self:broatcast("ToTuiBingGameState", toclient)
+	end
 end
 
 -- 找到一个庄家
@@ -119,7 +135,7 @@ function TuiBing:changeBanker()
 			break
 		end
 	end
-	self.banker.player_id = 0
+	self:initBanker()
 end
 
 local function toAddGold(id, gold, log)
@@ -148,13 +164,17 @@ local function toAskBankerBegin( sn )
 	skynet.call( sn, "lua", "sendPacket", "ToBankerBegin", toclient)
 end
 
-function TuiBing:sendBankerInfo()
+function TuiBing:sendBankerInfo( sn )
 	local toclient = {}
 	toclient.name = self.banker.player_name
 	toclient.gold = self.banker.banker_gold
 	toclient.id = self.banker.player_id
 	toclient.times = self.banker.banker_times
-	self:broatcast("ToTuibingBankerInfo",toclient)
+	if sn then
+		self:sendToPlayer( sn, "ToTuibingBankerInfo",toclient )
+	else
+		self:broatcast("ToTuibingBankerInfo",toclient)
+	end
 end
 
 function TuiBing:unBebanker()
@@ -169,7 +189,7 @@ function TuiBing:GameBegin()
 	-- self.running_time_ = 0
 	config.Lprint(1, "state Begin", self.banker.player_id)
 	self.state = TuiBingState.Begin
-	
+	skynet.stoptimer( game_state_timer )
 
 	if self.banker.player_id == 0 then
 		self:changeBanker()
@@ -212,11 +232,15 @@ function TuiBing:GameBegin()
 		return;
 	end
 
-	skynet.timeout( TuiBingConfig.WAIT_BEGIN*100, function()
+	game_state_timer = skynet.timeout( TuiBingConfig.WAIT_BEGIN*100, function()
 		if self.state == TuiBingState.Begin_Check_Begin then
 			self:GameReady()
 		elseif self.state == TuiBingState.Begin_Check_Keep then
 			self:unBebanker()
+		else 
+			self:initBanker()
+			self:initGame()
+			self.state = TuiBingState.Unknow
 		end
 	end )
 end
@@ -225,9 +249,9 @@ function TuiBing:GameReady()
 	config.Lprint(1, "state Ready")
 	
 	self.state = TuiBingState.WaitOpen
+	skynet.stoptimer(game_state_timer)
 	self:sendGameState()
-	skynet.timeout( TuiBingConfig.WAIT_BET*100, function( ... )
-	-- self.state = TuiBingState.WaitOpen
+	game_state_timer = skynet.timeout( TuiBingConfig.WAIT_BET*100, function( ... )
 		self:GameDeal()
 	end )
 end
@@ -251,6 +275,7 @@ end
 function TuiBing:GameDeal()
 	self.state = TuiBingState.Openning
 	self:sendGameState()
+	skynet.stoptimer(game_state_timer)
 
 	self.result = getMajiang()
 	config.Ldump( self.result, "self.result" )
@@ -265,7 +290,7 @@ function TuiBing:GameDeal()
 	end
 	self:broatcast( "ToDealMajiang", toclient )
 
-	skynet.timeout( TuiBingConfig.WAIT_OPEN*100, function( ... )
+	game_state_timer = skynet.timeout( TuiBingConfig.WAIT_OPEN*100, function( ... )
 		self:GameReward()
 	end)
 end
@@ -273,6 +298,7 @@ end
 function TuiBing:GameReward()
 	config.Lprint(1, "state Reward")
 	self.state = TuiBingState.Reward
+	skynet.stoptimer(game_state_timer)
 	self:sendGameState()
 
 	local function isdouble( tbl )
@@ -352,25 +378,11 @@ function TuiBing:GameReward()
 
 	self:sendBankerInfo()
 
-	skynet.timeout(TuiBingConfig.WAIT_REWARD*100, function ( ... )
+	game_state_timer = skynet.timeout(TuiBingConfig.WAIT_REWARD*100, function ( ... )
 		-- 重新开始一局
 		self:GameBegin()
 	end)
 end
-
--- function TuiBing:update()
--- 	if self.state == TuiBingState.Begin then
--- 		self:GameBegin()
--- 	elseif self.state == TuiBingState.Ready then
--- 		self:GameReady()
--- 	elseif self.state == TuiBingState.WaitOpen then
--- 		self:GameDeal()
--- 	elseif self.state == TuiBingState.Openning then
-
--- 	elseif self.state == TuiBingState.Reward then
-
--- 	end
--- end
 
 --[[be banker
 	param info 
@@ -391,10 +403,10 @@ function TuiBing:BeBanker( info )
 		banker_state = PlayerState.Natural,
 	}
 
-	self:QueueInfoChange()
+	self:sendBankerQueueInfo()
 end
 
-function TuiBing:QueueInfoChange()
+function TuiBing:sendBankerQueueInfo( sn )
 	local toclient = {}
 
 	toclient.bankerid = self.banker.player_id
@@ -417,7 +429,11 @@ function TuiBing:QueueInfoChange()
 		talbe_insert( tbl, p )
 	end
 	toclient.queue = tbl
-	self:broatcast("ResTuiBingQueueChange", toclient)
+	if sn then
+		self:sendToPlayer( sn, "ResTuiBingQueueChange", toclient )
+	else
+		self:broatcast("ResTuiBingQueueChange", toclient)
+	end
 end
 
 --[[
@@ -425,14 +441,18 @@ playerBeBanker param
 t 		: 	1 normal queue 2 fast queue
 info	: 	player_id, player_ws, player_sn, player_name ]]
 function TuiBing:playerBeBanker( t, info )
+	if self.banker.player_id == info.player_id then
+		return ErrorCode.UR_BANKER
+	end
+
 	for i,v in ipairs(self.fast_banker_list) do
 		if v.player_id == info.player_id then
-			return
+			return ErrorCode.HAS_IN_QUEUE
 		end
 	end
 	for i,v in ipairs(self.banker_list) do
 		if v.player_id == info.player_id then
-			return
+			return ErrorCode.HAS_IN_QUEUE
 		end
 	end
 
@@ -461,7 +481,7 @@ function TuiBing:playerBeBanker( t, info )
 		end
 	end
 	if ret == 0 then
-		self:QueueInfoChange()
+		self:sendBankerQueueInfo()
 		if self.state == TuiBingState.Stop then
 			self:GameBegin()
 		end
@@ -492,7 +512,7 @@ function TuiBing:playerLeaveQueue( player_id )
 	if not changed then checklist( self.banker_list, player_id ) end
 
 	if changed then
-		self:QueueInfoChange()
+		self:sendBankerQueueInfo()
 		return 0
 	else
 		return ErrorCode.NOT_IN_QUEUE
@@ -511,6 +531,13 @@ function TuiBing:addPlayer( roleinfo )
 	local info = roleinfo
 	info.state = PlayerState.Natural
 	player_list[ roleinfo.player_id ] = roleinfo
+
+	skynet.timeout( 10, function( ... )
+		self:sendGameState( roleinfo.player_sn )
+		self:sendBankerInfo( roleinfo.player_sn )
+		self:sendBankerQueueInfo( roleinfo.player_sn )
+		self:sendPosGold( roleinfo.player_sn )
+	end )
 	return 0
 end 
 
@@ -554,6 +581,7 @@ end
 
 function TuiBing:bankerBeginGame()
 	if self.state == TuiBingState.Begin_Check_Begin then
+		skynet.stoptimer(game_state_timer) 
 		self.state = TuiBingState.Ready
 		self:GameReady()
 	end
@@ -567,6 +595,16 @@ function TuiBing:getBetTotalGold()
 		end
 	end
 	return gold
+end
+
+function TuiBing:sendPosGold( sn )
+	local toclient = {}
+	toclient.gold = self:getBetTotalGold()
+	if sn then
+		self:sendToPlayer( sn, "ToTuiBingBetGold", toclient )
+	else
+		self:broatcast( "ToTuiBingBetGold", toclient )
+	end
 end
 --[[ info 
 	player_id
@@ -598,15 +636,6 @@ function TuiBing:playerBet( info )
 		return
 	end
 
-	-- if player.bet_info == nil then
-	-- 	player.bet_info = {}
-	-- end
-	-- if player.bet_info[ info.pos ] == nil then
-	-- 	player.bet_info[ info.pos ] = 0
-	-- end
-
-	-- player.bet_info[ info.pos ] = player.bet_info[ info.pos ] + info.gold
-
 	local infotbl = self.bet_info[ info.pos ]
 	if infotbl[ info.player_id ] == nil then
 		infotbl[ info.player_id ] = 0
@@ -619,11 +648,12 @@ function TuiBing:playerBet( info )
 	toclient.pos = info.pos
 	toclient.gold = info.gold
 	self:broatcast( "ResTuiBingBet", toclient )
-
-	toclient = {}
-	toclient.gold = self:getBetTotalGold()
-	self:broatcast( "ToTuiBingBetGold", toclient )
+	self:sendPosGold()
 	return 0
+end
+
+function TuiBing:sendToPlayer( sn, head, body )
+	skynet.call( sn, "lua", "sendPacket", head, body )
 end
 
 function TuiBing:broatcast( head, body ) -- pkg:{head = "head", body = "body"}
@@ -653,11 +683,12 @@ end
 -- end)
 
 function TuiBing:check( t, ... )
-	config.Lprint(1, "Debug Check", t, ...)
 	if t == nil or t == 1 then
-		return TuiBing.state
+		return "TuiBing.state = " .. TuiBing.state
 	elseif t == 2 then
 		return TuiBing.banker
+	elseif t == 3 then
+		return player_list
 	end
 end
 

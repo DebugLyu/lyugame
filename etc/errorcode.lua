@@ -14,6 +14,8 @@ ErrorCode.GOLD_NOT_ENOUGH = 301
 ErrorCode.BANKER_NO_BET = 401
 ErrorCode.NOT_BANKER = 402
 ErrorCode.NOT_IN_QUEUE = 403
+ErrorCode.UR_BANKER = 404
+ErrorCode.HAS_IN_QUEUE = 405
 
 -- mahjong
 ErrorCode.MAHJONG_ROOM_FULL = 501
