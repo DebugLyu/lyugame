@@ -562,7 +562,12 @@ function TuiBing:KeepTuiBingBanker( info )
 		if self.banker.player_id == info.player_id then
 			self.banker.banker_gold = self.banker.banker_gold + info.gold
 			if self.banker.banker_gold > 1000 then
+				skynet.stoptimer(game_state_timer)
 				toAskBankerBegin( self.banker.player_sn )
+				self.state = TuiBingState.Begin_Check_Begin
+				game_state_timer = skynet.timeout( TuiBingConfig.WAIT_BEGIN*100, function()
+					self:GameReady()
+				end )
 			else
 				self:unBebanker()
 			end

@@ -305,7 +305,9 @@ function CMD.close()
 	end
 
 	player:save()
-	skynet.exit()
+	skynet.timeout(5*100, function( ... )
+		skynet.exit()	
+	end)
 end
 
 skynet.start(function()
