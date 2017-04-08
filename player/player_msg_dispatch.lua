@@ -85,6 +85,11 @@ function sendmahjong()
 	player:sendMahJong( mj )
 end
 
+function tuibinginfo(pack)
+	player:reqTuibingInfo()
+end
+
+
 MSG = {
 	["Reqlogin"] = login,
 	["ReqRegister"] = register,
@@ -98,6 +103,7 @@ MSG = {
 	["ReqAddGold"] = addgold,
 	["ReqTuiBingUnbanker"] = unbanker,
 	["ReqTuibingLeaveQueue"] = leavequeue,
+	["ReqTuiBingInfo"] = tuibinginfo,
 	-- 麻将相关
 	["ReqMjSendMj"] = sendmahjong,
 }

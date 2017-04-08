@@ -489,6 +489,16 @@ function TuiBing:playerBeBanker( t, info )
 	return ret
 end
 
+function TuiBing:playerGetInfo( player_id )
+	local info = player_list[ player_id ]
+	if info then
+		self:sendGameState( info.player_sn )
+		self:sendBankerInfo( info.player_sn )
+		self:sendBankerQueueInfo( info.player_sn )
+		self:sendPosGold( info.player_sn )
+	end
+end
+
 function TuiBing:playerUnBanker( player_id )
 	if self.banker.player_id ~= player_id then
 		return ErrorCode.NOT_BANKER
@@ -535,12 +545,6 @@ function TuiBing:addPlayer( roleinfo )
 	info.state = PlayerState.Natural
 	player_list[ roleinfo.player_id ] = roleinfo
 
-	skynet.timeout( 10, function( ... )
-		self:sendGameState( roleinfo.player_sn )
-		self:sendBankerInfo( roleinfo.player_sn )
-		self:sendBankerQueueInfo( roleinfo.player_sn )
-		self:sendPosGold( roleinfo.player_sn )
-	end )
 	return 0
 end 
 

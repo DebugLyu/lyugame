@@ -50,7 +50,7 @@ function handler.on_message(ws, message)
             
             end
         else
-            skynet.error( "[ERROR] check pb head faild, head[%d]", head )
+            skynet.error( "[ERROR] check pb head faild, head["..head.."]")
         end
     else
         skynet.error( "[ERROR] check pb head faild, head len < 0")
@@ -90,7 +90,7 @@ end
 
 skynet.start(function()
     -- 注册 protobuf message
-    parser.register("gamebox.proto","gamebox/protocal/")
+    parser.register("gamebox.proto","lyugame/protocal/")
     -- 监听本地端口
     local address = "0.0.0.0:8001"
     skynet.error("Listening "..address)

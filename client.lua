@@ -12,7 +12,7 @@ local fd = assert(socket.connect("127.0.0.1", 8001))
 local pb = require "protobuf"
 local parser = require "parser"
 
-parser.register("gamebox.proto","gamebox/protocal/")
+parser.register("gamebox.proto","lyugame/protocal/")
 
 local function printf( ... )
 	print( string.format( ... ) )

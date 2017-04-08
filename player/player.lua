@@ -158,6 +158,15 @@ function player:checkGold( gold )
 	return ErrorCode.GOLD_NOT_ENOUGH
 end
 
+function player:reqTuibingInfo()
+	local room_sn = self.room_info.room_sn
+
+	if room_sn == 0 then
+		return
+	end
+	local ret = skynet.call( room_sn, "lua", "playerGetInfo", self.id)
+end
+
 function player:beBanker( t )
 	local room_sn = self.room_info.room_sn
 	
@@ -312,7 +321,7 @@ end
 
 skynet.start(function()
 	-- 注册 protobuf message 
-    local t = parser.register("gamebox.proto","gamebox/protocal/")
+    local t = parser.register("gamebox.proto","lyugame/protocal/")
     skynet.dispatch( "lua", function(_,_, command, ...)
     	-- 注意命令方法 不要跟消息方法 重名，否则将会出错
 		local f = CMD[command]

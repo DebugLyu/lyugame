@@ -153,12 +153,11 @@ message ToTuibingBankerInfo {
 	required int32 times = 4;
 }
 
-message ReqTuibingInfo {
-	
+//申请推饼房间信息
+message ReqTuiBingInfo {
 }
 
 message ResTuibingInfo {
-	
 }
 
 //申请加金币
