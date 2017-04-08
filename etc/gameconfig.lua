@@ -25,7 +25,7 @@ TuiBingConfig = {
 	WAIT_BEGIN = 5, -- 等待开始游戏时间
 	WAIT_KEEP = 15, -- 等待续庄时间
 	WAIT_BET = 10, -- 等待押注时间
-	WAIT_OPEN = 3, -- 开牌展示时间
+	WAIT_OPEN = 5, -- 开牌展示时间
 	WAIT_REWARD = 2, -- 奖励发送时间
 }
 

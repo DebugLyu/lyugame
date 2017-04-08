@@ -527,6 +527,9 @@ end
 function TuiBing:addPlayer( roleinfo )
 	if self.banker.player_id == roleinfo.player_id then
 		self.banker.banker_state = PlayerState.Natural
+		self.banker.player_id = roleinfo.player_id
+		self.banker.player_sn = roleinfo.player_sn
+		self.banker.player_ws = roleinfo.player_ws
 	end
 	local info = roleinfo
 	info.state = PlayerState.Natural
