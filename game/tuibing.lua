@@ -288,6 +288,8 @@ function TuiBing:GameDeal()
 		m.majiang2 = v[2]
 		talbe_insert( toclient.majiangs, m )
 	end
+	toclient.dice1 = math.random( 1, 6 )
+	toclient.dice2 = math.random( 1, 6 )
 	self:broatcast( "ToDealMajiang", toclient )
 
 	game_state_timer = skynet.timeout( TuiBingConfig.WAIT_OPEN*100, function( ... )

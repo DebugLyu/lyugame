@@ -282,6 +282,9 @@ function player:sendMahJong( pai )
 end
 
 function player:save()
+	if self.id == 0 then
+		return
+	end
 	local toDB = {}
 	toDB.player_id = self.id
 	toDB.player_gold = self.gold

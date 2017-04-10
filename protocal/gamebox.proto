@@ -138,6 +138,8 @@ message ToDealMajiang {
         required int32 majiang2 = 2;
     }
 	repeated majiang majiangs = 1; //麻将们 1 庄 2 南 3 天 4 北
+	required int32 dice1 = 2;
+	required int32 dice2 = 3;
 }
 
 //广播可压金币数
