@@ -348,7 +348,7 @@ function TuiBing:GameReward()
 			-- 双方都不是对儿
 			num_b = ( banker[1] + banker[2] ) % 10
 			num_o = ( other[1] + other[2] ) % 10
-			if num_b > num_o then
+			if num_b >= num_o then
 				-- 庄家赢
 				banker_win( pos )
 			else
@@ -365,12 +365,20 @@ function TuiBing:GameReward()
 			pos_win( pos )
 		elseif ( is_double_b ) and ( is_double_o ) then
 			-- 都是对儿
-			if num_b >= num_o then
+			if num_b == 0 then
 				-- 庄家赢
 				banker_win( pos )
-			else
+			elseif num_o == 0 then
 				-- 玩家赢
 				pos_win( pos )
+			else
+				if num_b >= num_o then
+					-- 庄家赢
+					banker_win( pos )
+				else
+					-- 玩家赢
+					pos_win( pos )
+				end
 			end
 		end
 	end

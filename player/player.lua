@@ -76,7 +76,7 @@ function player:login( account, password )
 	if ret.result == 0 then
 		if ret.roleinfo.password == password then
 			-- 判断是否在线
-			local sn = skynet.call( ".PlayerManager", "lua", "getPlayerSN", ret.id )
+			local sn = skynet.call( ".PlayerManager", "lua", "getPlayerSN", ret.roleinfo.id )
 			if sn == 0 then
 				-- 登陆成功
 				self:loginSuccess(ret.roleinfo)
