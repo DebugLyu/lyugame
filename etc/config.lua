@@ -1,5 +1,5 @@
 -- config.lua
-
+local skynet = require "skynet"
 
 local config = {
 	DebugLevel = 1, -- 0 非debug 1 输出所有信息 2  3 仅输出重要信息
@@ -18,7 +18,14 @@ local config = {
 function config.Lprint( level, msg, ... )
 	if config.DebugLevel == 0 then return end
 	if level >= config.DebugLevel then 
-		print( "["..os.date("%Y-%m-%d %H:%M:%S", os.time()).."]", msg, ... )
+		local params = {...}
+		local param_str = ""
+		for k,v in ipairs(params) do
+			param_str = param_str .. "    " .. tostring(v)
+		end
+		-- print( "["..os.date("%Y-%m-%d %H:%M:%S", os.time()).."]", msg, ... )
+		
+		skynet.error( string.format( "%s %s", msg, param_str ) )
 	end
 end	
 

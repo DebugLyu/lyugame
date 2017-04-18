@@ -18,6 +18,8 @@ local sqls = {
 					SELECT * FROM user WHERE account='%s';",
 	["save"] = "UPDATE user SET gold = %d WHERE id = %d",
 	["addgold"] = "UPDATE user SET gold = gold + %d WHERE id = %d",
+	["addgoldlog"] = "INSERT INTO logs ( `playerid`, `num`, `type`, `param1`, `param2`, `date`) values \
+					( '%d', '%d', '%d', '%d', '%s', now())"
 }
 
 function CMD.run( sql )
@@ -56,11 +58,7 @@ function CMD.UserRegister( account, password )
 	if type( res ) == "table" then
 		if #res == 0 then
 			sql = string.format( sqls[ "register" ], account, account, password, account )
-			config.Lprint(1, "sql", sql )
 			res = CMD.run( sql )
-
-			config.Ldump( res , "UserRegister 2" )
-
 			if res.mulitresultset == true then
 				ret.roleinfo = res[2][1]
 				return ret
@@ -76,15 +74,38 @@ function CMD.UserRegister( account, password )
 	return ret
 end
 
-function CMD.PlayerAddGold( player_id, gold )
-	if gold == 0 then
+--[[
+	info
+		player_id 
+		gold
+		logtype
+		param1  int
+		param2  string
+]]
+function CMD.PlayerAddGold( info )
+	if info.gold == 0 then
 		return 
 	end
-	local sql = string.format( sqls["addgold"], gold, player_id )
-	local res = CMD.run( sql )
+	local sql = string.format( sqls["addgold"], info.gold, info.player_id )
 
-	local ret = {}
-	config.Ldump( res , "PlayerAddGold" )
+	local res = CMD.run( sql )
+	if type( res ) == "table" then
+		if res.affected_rows >= 1 then
+			CMD.PlayerAddGoldLog( info )
+		end
+	end
+end
+--[[
+	info
+		player_id 
+		gold
+		logtype
+		param1  int
+		param2  string
+]]
+function CMD.PlayerAddGoldLog( info )
+	local sql = string.format( sqls["addgoldlog"], info.player_id, info.gold, info.logtype, info.param1, info.param2 )
+	local res = CMD.run( sql )
 end
 
 --[[save player info
@@ -94,9 +115,7 @@ end
 ]]
 function CMD.savePlayer( info )
 	local sql = string.format( sqls[ "save" ], info.player_gold, info.player_id ) 
-	config.Lprint( 1, "sql = ", sql )
 	local res = CMD.run( sql )
-	config.Ldump( res , "DB savePlayer" )
 end
 
 skynet.start(function()

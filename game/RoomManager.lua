@@ -12,6 +12,17 @@ require "errorcode"
 
 local seedid = config.ROOM_SEED_BEGIN
 
+local RoomState = {
+	Close = 0,
+	Openning = 1,
+	Running = 2,
+	Closing = 3,
+}
+-- local room = {}
+-- room.id
+-- room.sn
+-- room.type
+-- room.state
 local room_list = {}
 
 local CMD = {}
@@ -21,7 +32,7 @@ local CMD = {}
 		room_id
 		playerinfo
 			- player_id
-			- player_ws
+			- player_name
 			- player_sn
  	return tbl need
 		result  - 0 success 
@@ -71,14 +82,64 @@ function CMD.CreateTuiBing()
 	room.id = TuiBingConfig.ROOM_ID
 	room.sn = tuibing
 	room.type = GameType.TUIBING
+	room.state = RoomState.Openning
 	room_list[room.id] = room 
 
-	skynet.send(tuibing, "lua", "gameStart")
+	local res = skynet.call(tuibing, "lua", "gameStart")
+	if res == 0 then
+		room_list[room.id].state = RoomState.Running
+	end
 	return 1
 end
 
 function CMD.test( ... )
 	print("RoomManager test")
+end
+
+
+function exit(  )
+	local topmgr = {}
+	topmgr.from = 1
+	skynet.call( ".PlayerManager", "lua", "ServerCloseBack", topmgr )
+	skynet.timeout(5*100, function( ... )
+		skynet.exit()	
+	end)
+end
+
+function checkCloseRoom()
+	local noerror = true
+	for room_id, room_info in pairs(room_list) do
+		if room_info.state ~= RoomState.Close then
+			noerror = false
+		end
+	end
+	if noerror then
+		exit()
+	end
+end
+--[[
+	info 
+		room_id
+]]
+function CMD.RoomCloseBack( info )
+	local room_info = room_list[ info.room_id ]
+	if room_info then
+		room_info.state = RoomState.Close
+	end
+	checkCloseRoom()
+end
+
+function CMD.close()
+	for room_id, room_info in pairs(room_list) do
+		local ok = skynet.call( room_info.sn, "lua", "close" )
+		if ok == true then
+			skynet.kill( room_info.sn )
+			room_info.state = RoomState.Close
+		else
+			room_info.state = RoomState.Closing
+		end
+	end
+	checkCloseRoom()
 end
 
 skynet.start(function(  )

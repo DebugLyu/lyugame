@@ -105,18 +105,15 @@ end
 function ws.new(id, header, handler, conf)
     local conf = conf or {}
     local handler = handler or {}
-
     setmetatable(handler, { __index = H })
 
     local code, result = accept_connection(header, conf.check_origin, handler.check_origin_ok)
-
     if code then
         response(id, code, result)
         socket.close(id)
     else
         write(id, result)
     end
-
     local self = {
         id = id,
         handler = handler,
@@ -125,9 +122,7 @@ function ws.new(id, header, handler, conf)
         mask_outgoing = conf.mask_outgoing,
         check_origin = conf.check_origin
     }
-
     self.handler.on_open(self)
- 
     return setmetatable(self, ws_mt)
 end
 

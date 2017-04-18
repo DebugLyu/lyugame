@@ -26,6 +26,7 @@ end
 			- room_sn
 		- player_ws
 		- player_sn
+		- player_account
 ]]
 function CMD.addPlayer( pinfo )
 	if player_list[ pinfo.player_id ] == nil then
@@ -71,6 +72,17 @@ function CMD.getPlayerSN( player_id )
 	return sn
 end
 
+function CMD.getPlayerSNByAccount( player_account )
+	local sn = 0
+	for id,pinfo in pairs(player_list) do
+		if pinfo.player_account == player_account then
+			sn = pinfo.player_sn
+			break
+		end
+	end
+	return sn
+end
+
 -- t type: default 0 全体 1 大厅 
 function CMD.broadcast( t, pkg )
 	for id,p in pairs( player_list ) do
@@ -82,6 +94,23 @@ end
 
 function CMD.test_1( ... )
 	print("aaaaaaaaaa")
+end
+
+function CMD.close()
+	skynet.call( ".RoomManager", "lua", "close" )
+end
+--[[
+	info 
+		from 
+			1 RoomManager
+]]
+function CMD.ServerCloseBack(info)
+	for id,p in pairs( player_list ) do
+		skynet.call( p.player_sn, "lua", "close" )
+	end
+	skynet.timeout(5*100, function( ... )
+		skynet.exit()	
+	end)
 end
 
 skynet.start(function(  )

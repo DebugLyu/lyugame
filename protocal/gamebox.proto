@@ -1,129 +1,136 @@
 package tutorial;
 
-//µÇÂ½ÇëÇó
+//ç™»é™†è¯·æ±‚
 message Reqlogin {
 	required string account = 1;
 	required string password = 2;
 }
-//µÇÂ½»Ø¸´
+//ç™»é™†å›å¤
 message Reslogin {
-	required int32 result = 1; // µÇÂ½½á¹û 0³É¹¦ 1Ãû×ÖÖØ¸´
-	required int32 id = 2;		//Íæ¼ÒÎ¨Ò»id
-	required string name = 3;	//Íæ¼ÒÃû
-	required int32 gold = 4; //½ğ±ÒÊı
+	required int32 result = 1; // ç™»é™†ç»“æœ 0æˆåŠŸ 1åå­—é‡å¤
+	required int32 id = 2;		//ç©å®¶å”¯ä¸€id
+	required string name = 3;	//ç©å®¶å
+	required int32 gold = 4; //é‡‘å¸æ•°
+	required int32 gmlevel = 5;//gmç­‰çº§
 }
 
-// ×¢²áÇëÇó
+// æ³¨å†Œè¯·æ±‚
 message ReqRegister {
-	required string account = 1;//ÕËºÅ
-	required string password = 2;//ÃÜÂë
+	required string account = 1;//è´¦å·
+	required string password = 2;//å¯†ç 
 }
-// ×¢²á»Ø¸´
+// æ³¨å†Œå›å¤
 message ResRegister {
-	required int32 result = 1; // ×¢²á½á¹û
+	required int32 result = 1; // æ³¨å†Œç»“æœ
 }
 
-// ¶Ï¿ª¿Í»§¶ËÁ¬½Ó
+// æ–­å¼€å®¢æˆ·ç«¯è¿æ¥
 message ToCloseClient {
-	required int32 type = 1; // ¶Ï¿ªÔ­Òò
+	required int32 type = 1; // æ–­å¼€åŸå› 
 }
 
 message ToGoldChange {
-	required int32 gold = 1; // ½ğ±Ò±ä»¯
+	required int32 gold = 1; // é‡‘å¸å˜åŒ–
 }
 
-//½øÈë·¿¼ä
+//è¿›å…¥æˆ¿é—´
 message ReqEnterRoom {
-	required int32 roomid = 1; 		//·¿¼äid
+	required int32 roomid = 1; 		//æˆ¿é—´id
 }
 
-//»Ø¸´½øÈë·¿¼ä
+//å›å¤è¿›å…¥æˆ¿é—´
 message ResEnterRoom {
-	required int32 result = 1;		//½á¹û 0³É¹¦£¬1ÂúÔ±
+	required int32 result = 1;		//ç»“æœ 0æˆåŠŸï¼Œ1æ»¡å‘˜
 	required int32 roomid = 2;		
 }
 
 message ReqLeaveRoom {
 }
 
-//ÉÏ×¯ÉêÇë
+//ä¸Šåº„ç”³è¯·
 message ReqBeBanker {
-	required int32 type = 1; //ÉêÇëÉÏ×¯ÀàĞÍ 1ÆÕÍ¨ÉÏ×¯ 2¿ìËÙÉÏ×¯
+	required int32 type = 1; //ç”³è¯·ä¸Šåº„ç±»å‹ 1æ™®é€šä¸Šåº„ 2å¿«é€Ÿä¸Šåº„
+	required int32 gold = 2; //ä¸Šåº„é‡‘å¸
 }
 
 message ResBeBanker {
-	required int32 result = 1; //ÉÏ×¯»Ø¸´
+	required int32 result = 1; //ä¸Šåº„å›å¤
 }
 
-//¹ã²¥·¿¼ä¶ÓÁĞ±ä»¯
+//å¹¿æ’­æˆ¿é—´é˜Ÿåˆ—å˜åŒ–
 message ResTuiBingQueueChange {
-	required int32 bankerid = 1;   //×¯¼Òid
-	required string bankername = 2; //×¯¼ÒÃû×Ö
+	required int32 bankerid = 1;   //åº„å®¶id
+	required string bankername = 2; //åº„å®¶åå­—
 
 	message QueuePlayer {
-		required int32 playerid = 1; //Íæ¼Òid
-        required string playername = 2;//Íæ¼ÒÃû×Ö
-        required int32 type = 3;//Íæ¼ÒÅÅ¶ÓÀàĞÍ
+		required int32 playerid = 1; //ç©å®¶id
+        required string playername = 2;//ç©å®¶åå­—
+        required int32 type = 3;//ç©å®¶æ’é˜Ÿç±»å‹
       }
-	repeated QueuePlayer queue = 3; //¶ÓÁĞ
+	repeated QueuePlayer queue = 3; //é˜Ÿåˆ—
 }
 
-//Í¨ÖªÍæ¼Ò ÓÎÏ·×´Ì¬¸Ä±ä
+//é€šçŸ¥ç©å®¶ æ¸¸æˆçŠ¶æ€æ”¹å˜
 message ToTuiBingGameState {
-	required int32 state = 1;   //ÓÎÏ·½×¶Î
+	required int32 state = 1;   //æ¸¸æˆé˜¶æ®µ
 }
 
-//Ñ¯ÎÊ×¯¼Ò ÊÇ·ñ¿ªÊ¼
+//è¯¢é—®åº„å®¶ æ˜¯å¦å¼€å§‹
 message ToBankerBegin {
 }
 
-// ×¯¼ÒÈ·¶¨ÓÎÏ·¿ªÊ¼
+// åº„å®¶ç¡®å®šæ¸¸æˆå¼€å§‹
 message ReqTuiBingBegin {
 }
 
-//ÏÂ×¯
+//ä¸‹åº„
 message ReqTuiBingUnbanker {
 }
 
-//ÏÂ×¯·´À¡
+//ä¸‹åº„åé¦ˆ
 message ResTuiBingUnbanker {
 	required int32 result = 1;
 }
 
-//Àë¿ª¶ÓÁĞ
+//ç¦»å¼€é˜Ÿåˆ—
 message ReqTuibingLeaveQueue {
 }
-//Àë¿ª¶ÓÁĞ ·´À¡
+//ç¦»å¼€é˜Ÿåˆ— åé¦ˆ
 message ResTuibingLeaveQueue {
 	required int32 result = 1;
 }
 
-// ¿ªÊ¼ÓÎÏ··´À¡
+// å¼€å§‹æ¸¸æˆåé¦ˆ
 message ResBankerBegin {
 }
 
-//Ñ¯ÎÊÊÇ·ñĞø×¯
+//è¯¢é—®æ˜¯å¦ç»­åº„
 message ToKeepBanker {
 }
 
-//Ğø×¯ÉêÇë
+//ç»­åº„ç”³è¯·
 message ReqKeepBanker {
-	required int32 iskeep = 1;   //0£º¼ÌĞø 1£ºÏÂ×¯
+	required int32 iskeep = 1;   //0ï¼šç»§ç»­ 1ï¼šä¸‹åº„
 	required int32 gold = 2;   //
 }
 
-// Ğø×¯ ·´À¡
+// ç»­åº„ åé¦ˆ
 message ResKeepBanker {
 	required int32 result = 1;
 }
 
-// Íæ¼ÒÏÂ×¢
+// ç©å®¶ä¸‹æ³¨
 message ReqTuiBingBet {
-	required int32 pos = 1; 	//ÉêÇëÏÂ×¢Î»ÖÃ
+	required int32 pos = 1; 	//ç”³è¯·ä¸‹æ³¨ä½ç½®
 	required int32 gold = 2;
 }
 
-//¹ã²¥ÏÂ×¢Í¨Öª
+message ToTuiBingResult {
+	repeated int32 iswiner = 1; // å— å¤© åŒ— 0è¾“ 1èµ¢
+	repeated int32 posgold = 2; // ç©å®¶ å„ä¸ª ä½ç½®èµ¢å¤šå°‘
+}
+
+//å¹¿æ’­ä¸‹æ³¨é€šçŸ¥
 message ResTuiBingBet {
 	required int32 result = 1;
 	required int32 id = 2;
@@ -131,23 +138,23 @@ message ResTuiBingBet {
 	required int32 gold = 4;
 }
 
-//¹ã²¥¿ªÅÆ
+//å¹¿æ’­å¼€ç‰Œ
 message ToDealMajiang {
 	message majiang {
 		required int32 majiang1 = 1;
         required int32 majiang2 = 2;
     }
-	repeated majiang majiangs = 1; //Âé½«ÃÇ 1 ×¯ 2 ÄÏ 3 Ìì 4 ±±
+	repeated majiang majiangs = 1; //éº»å°†ä»¬ 1 åº„ 2 å— 3 å¤© 4 åŒ—
 	required int32 dice1 = 2;
 	required int32 dice2 = 3;
 }
 
-//¹ã²¥¿ÉÑ¹½ğ±ÒÊı
+//å¹¿æ’­å¯å‹é‡‘å¸æ•°
 message ToTuiBingBetGold {
-	required int32 gold = 1;
+	repeated int32 gold = 1;// å—  å¤©  åŒ— å„å‹äº†å¤šå°‘
 }
 
-//¹ã²¥·¿¼äĞÅÏ¢ 
+//å¹¿æ’­æˆ¿é—´ä¿¡æ¯ 
 message ToTuibingBankerInfo {
 	required string name = 1;
 	required int32 id = 2;
@@ -155,19 +162,36 @@ message ToTuibingBankerInfo {
 	required int32 times = 4;
 }
 
-//ÉêÇëÍÆ±ı·¿¼äĞÅÏ¢
+//ç”³è¯·æ¨é¥¼æˆ¿é—´ä¿¡æ¯
 message ReqTuiBingInfo {
 }
 
 message ResTuibingInfo {
 }
 
-//ÉêÇë¼Ó½ğ±Ò
-message ReqAddGold {
-	required int32 gold = 1;
+message ReqTuiBingAllPlayer {
 }
 
-//////////////////////////////Âé½«Ïà¹Ø///////////////////
+message ResTuiBingAllPlayer {
+	message pInfo {
+		required int32 id = 1;
+		required string name = 2;
+	}
+	repeated pInfo list = 1;
+}
+
+//ç”³è¯·åŠ é‡‘å¸
+message ReqAddGold {
+	required int32 id = 1;
+	required int32 gold = 2;
+	required int32 logtype = 3;
+}
+
+message ResAddGold {
+	required int32 result = 1;
+}
+
+//////////////////////////////éº»å°†ç›¸å…³///////////////////
 message ToMjRoomPlayerEnter {
 	required int32 id = 1;
 	required string name = 2;
@@ -178,38 +202,38 @@ message ToMjRoomPlayerEnter {
 
 message ToMjReady {
 }
-//ÉêÇë×¼±¸ÓÎÏ·
+//ç”³è¯·å‡†å¤‡æ¸¸æˆ
 message ReqMJReady {
 }
 
 message ResMJReady {
-	repeated int32 pos = 1;//ÒÑ¾­×¼±¸ÁËµÄÎ»ÖÃ
+	repeated int32 pos = 1;//å·²ç»å‡†å¤‡äº†çš„ä½ç½®
 }
-// ÌáÊ¾¿Í»§¶Ë ÓĞ¿ÉÑ¡³öÅÆÀàĞÍ Åö ¸Ü ºú
+// æç¤ºå®¢æˆ·ç«¯ æœ‰å¯é€‰å‡ºç‰Œç±»å‹ ç¢° æ  èƒ¡
 message ToMjSelected {
 	message SelectType {
-		required int32 state = 1; //2 Åö 3 ¸Ü 4 °µ¸Ü  4 ÆÕÍ¨ºú 5 ¶Ô¶Ôºú
+		required int32 state = 1; //2 ç¢° 3 æ  4 æš—æ   4 æ™®é€šèƒ¡ 5 å¯¹å¯¹èƒ¡
 		required int32 pai = 2;
 		required int32 pos = 3;
 	}
 	repeated SelectType states = 1;
 }
-// ÆğÅÆ
+// èµ·ç‰Œ
 message ToMjGetMj {
 	required int32 pai = 1;
 }
-// ¿Í»§¶ËÉêÇë³öÅÆ
+// å®¢æˆ·ç«¯ç”³è¯·å‡ºç‰Œ
 message ReqMjSendMj {
 	required int32 pai = 1;
 }
-// ³öÅÆ´íÎó·µ»Ø
+// å‡ºç‰Œé”™è¯¯è¿”å›
 message ResMjSendMj {
 	required int32 result = 1;
 }
-// Í¨Öª¿Í»§¶ËÓĞÈËÒªÅÆ
+// é€šçŸ¥å®¢æˆ·ç«¯æœ‰äººè¦ç‰Œ
 message ToMjSmOneUse {
 }
-// ÉêÇë ÌØÊâ²Ù×÷ Åö ¸Ü ºú
+// ç”³è¯· ç‰¹æ®Šæ“ä½œ ç¢° æ  èƒ¡
 message ReqMjOperate {
 	required int32 state = 1;
 	required int32 pai = 2;

@@ -45,7 +45,8 @@ end
 
 function bebanker( pack )
 	local t = pack.type
-	player:beBanker(t)
+	local gold = pack.gold
+	player:beBanker(t, gold)
 end
 
 function unbanker( pack )
@@ -70,10 +71,16 @@ end
 
 function addgold( pack )
 	local gold = pack.gold
-	local info = {}
-	info.num = gold
-	info.log = GoldLog.GM_ADD
-	player:addGold( info )
+	local id = pack.id
+	local goldtype = pack.logtype	
+	-- local info = {}
+	-- info.id = id
+	-- info.gold = gold
+	-- info.log = GoldLog.GM_ADD
+	-- info.param1 = 0
+	-- info.param2 = ""
+	-- player:addGold( info )
+	player:GMAddGold( id, gold, goldtype )
 end
 
 function leavequeue()
@@ -89,6 +96,9 @@ function tuibinginfo(pack)
 	player:reqTuibingInfo()
 end
 
+function tuibingallplayer( pack )
+	player:getTuibingAllPlayer()
+end
 
 MSG = {
 	["Reqlogin"] = login,
@@ -104,6 +114,7 @@ MSG = {
 	["ReqTuiBingUnbanker"] = unbanker,
 	["ReqTuibingLeaveQueue"] = leavequeue,
 	["ReqTuiBingInfo"] = tuibinginfo,
+	["ReqTuiBingAllPlayer"] = tuibingallplayer,
 	-- 麻将相关
 	["ReqMjSendMj"] = sendmahjong,
 }
@@ -114,7 +125,6 @@ function MSG.MessageDispatch( head, msgbody )
 		local a,b,c = pcall( pb.decode, head, msgbody )
 		local code = pb.decode( "tutorial."..head, msgbody )
 		if code then
-			config.Ldump( code, "["..head.."]" )
 			func( code )
 		end
 	else
