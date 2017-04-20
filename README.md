@@ -6,6 +6,8 @@ https://github.com/cloudwu/skynet/
 clone lyugame and put it in skynet root directory
 
 move lyugame/3rdlib/protobuf.so to skynet/luaclib
+move lyugame/3rdlib/protobuf.lua to skynet/lualib
+make dir logs at skynet/
 
 modify skynet source
 	1 find skynet.lua
@@ -32,3 +34,5 @@ modify skynet source
 cd skynet
 
 run ./skynet ./lyugame/config.lyugame
+
+have fun

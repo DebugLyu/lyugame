@@ -18,8 +18,8 @@ local sqls = {
 					SELECT * FROM user WHERE account='%s';",
 	["save"] = "UPDATE user SET gold = %d WHERE id = %d",
 	["addgold"] = "UPDATE user SET gold = gold + %d WHERE id = %d",
-	["addgoldlog"] = "INSERT INTO logs ( `playerid`, `num`, `type`, `param1`, `param2`, `date`) values \
-					( '%d', '%d', '%d', '%d', '%s', now())"
+	["addgoldlog"] = "INSERT INTO logs ( `playerid`, `num`, `type`, `param1`, `param2`, `param3`, `date`) values \
+					( '%d', '%d', '%d', '%d', '%s', '%d', now())"
 }
 
 function CMD.run( sql )
@@ -76,36 +76,54 @@ end
 
 --[[
 	info
-		player_id 
+		player_id
 		gold
 		logtype
 		param1  int
 		param2  string
+		param3  int
 ]]
 function CMD.PlayerAddGold( info )
 	if info.gold == 0 then
 		return 
 	end
+
 	local sql = string.format( sqls["addgold"], info.gold, info.player_id )
 
 	local res = CMD.run( sql )
 	if type( res ) == "table" then
 		if res.affected_rows >= 1 then
 			CMD.PlayerAddGoldLog( info )
+			return 0
 		end
 	end
+	-- skynet.error( string.format("[ERROR] player[%d] add gold error "))
+	config.Lprint( 1, string.format( "[ERROR] player[%d] add gold[%d] error", info.player_id, info.gold ) )
+	config.Ldump( res, "DB.PlayerAddGold.res" )
+	return 1
 end
 --[[
 	info
-		player_id 
+		player_id : id can use 0, 0 is system
 		gold
 		logtype
 		param1  int
 		param2  string
+		param3  int
 ]]
 function CMD.PlayerAddGoldLog( info )
-	local sql = string.format( sqls["addgoldlog"], info.player_id, info.gold, info.logtype, info.param1, info.param2 )
+	if info.gold == 0 then
+		return
+	end
+	info.logtype = info.logtype or 0
+	info.param1 = info.param1 or 0
+	info.param2 = info.param2 or ""
+	info.param3 = info.param3 or 0
+
+	local sql = string.format( sqls["addgoldlog"], info.player_id, info.gold, info.logtype, info.param1, info.param2, info.param3 )
 	local res = CMD.run( sql )
+
+	return 0
 end
 
 --[[save player info
@@ -116,6 +134,10 @@ end
 function CMD.savePlayer( info )
 	local sql = string.format( sqls[ "save" ], info.player_gold, info.player_id ) 
 	local res = CMD.run( sql )
+end
+
+function CMD.close()
+	
 end
 
 skynet.start(function()

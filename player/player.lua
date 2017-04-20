@@ -62,6 +62,8 @@ function player:loginSuccess( roleinfo )
 	toclient.gold = self.gold
 	toclient.gmlevel = self.gmlevel
 	self:sendPacket( "Reslogin", toclient )
+
+	config.Lprint(1, string.format("[PLAYERINFO] player[%d] loginSuccess", self.id))
 end
 
 function player:login( account, password )
@@ -122,6 +124,8 @@ function player:enterRoom( room_id )
 		roomid = ret.room_id,
 	}
 	self:sendPacket( "ResEnterRoom", toclient )
+	config.Lprint(1, string.format("[PLAYERINFO] player[%d] enter room[%d], result[%d]", 
+		self.id, room_id, ret.result ))
 end
 
 function player:leaveRoom()
@@ -130,6 +134,10 @@ function player:leaveRoom()
 		player_id = self.id
 	}
 	skynet.call( ".RoomManager", "lua", "PlayerLevelRoom", toroommanager)
+
+	config.Lprint(1, string.format("[PLAYERINFO] player[%d] leave room[%d]", 
+		self.id, self.room_info.room_id ))
+
 	self.room_info.room_id = 0
 	self.room_info.room_sn = 0
 end
@@ -153,7 +161,6 @@ function player:GMAddGold( id, gold, log )
 			info.gold = gold
 			info.logtype = gmlog
 			info.param1 = self.id
-			info.param2 = ""
 			config.Ldump( info, "player.GMAddGold.info" )
 
 			local sn = skynet.call( ".PlayerManager", "lua", "getPlayerSN", id )
@@ -168,6 +175,9 @@ function player:GMAddGold( id, gold, log )
 	end
 	-- send to player
 	self:sendPacket( "ResAddGold", toclient )
+
+	config.Lprint(1, string.format("[GMINFO] GM[%d] add gold[%d] to player[%d], logtype[%d]", 
+		self.id, gold, id, log ))
 end
 --[[
 	info: 
@@ -176,6 +186,7 @@ end
 		logtype : gold source 
 		param1 : 0
 		param2 : ""
+		param3 : 0
 ]]
 function player:addGold( info )
 	local gold = info.gold 
@@ -185,9 +196,10 @@ function player:addGold( info )
 	config.Ldump( info, "player.addGold.info" )
 
 	if self.gold + gold > GLOBAL_MAX_GOLD then
-		config.Lprint( 1, string.format("WARNING: player[%d] gold more than %d", self.id, GLOBAL_MAX_GOLD ))
+		config.Lprint( 1, string.format("[PLAYERINFO] player[%d] gold more than MaxGold[%d]", self.id, GLOBAL_MAX_GOLD ))
 		gold = GLOBAL_MAX_GOLD - self.gold
 	end
+	local before_gold = self.gold 
 	self.gold = self.gold + gold
 
 	local toclient = {}
@@ -196,9 +208,9 @@ function player:addGold( info )
 
 	-- 记录日志
 	info.player_id = info.player_id or self.id
-	info.param1 = info.param1 or 0
-	info.param2 = info.param2 or ""
 	skynet.call( ".DBService", "lua", "PlayerAddGoldLog", info )
+	config.Lprint(1, string.format("[PLAYERINFO] player[%d] add gold[%d], before[%d], now[%d]", 
+		self.id, gold, before_gold, self.gold ))
 	return 0
 end
 
@@ -246,6 +258,8 @@ function player:beBanker( t, gold )
 		toclient.result = ret
 		self:sendPacket( "ResBeBanker", toclient )
 	end
+	config.Lprint(1, string.format("[PLAYERINFO] player[%d] use gold[%d] beBanker, result[%d]", 
+		self.id, gold, ret))
 end
 
 function player:unBanker()
@@ -255,11 +269,11 @@ function player:unBanker()
 	end
 
 	local ret = skynet.call( room_sn, "lua", "playerUnBanker", self.id )
-	if ret ~= 0 then
-		local toclient = {}
-		toclient.result = ret
-		self:sendPacket( "ResTuiBingUnbanker", toclient )
-	end
+	config.Lprint(1, string.format("[PLAYERINFO] player[%d] ask for unBanker, result[%d]", self.id, ret))
+
+	local toclient = {}
+	toclient.result = ret
+	self:sendPacket( "ResTuiBingUnbanker", toclient )
 end
 
 function player:leaveBankerQueue( ... )
@@ -274,9 +288,11 @@ function player:leaveBankerQueue( ... )
 		toclient.result = ret
 		self:sendPacket( "ResTuibingLeaveQueue", toclient )
 	end
+	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] leaveBankerQueue, result[%d]", 
+		self.id, ret))
 end
 --[[keepBanker 继续坐庄
-
+	iskeep : 0 keep 1 unkeep
 ]]
 function player:keepBanker( iskeep, gold )
 	local room_sn = self.room_info.room_sn
@@ -290,16 +306,19 @@ function player:keepBanker( iskeep, gold )
 	}
 
 	if iskeep == 0 then
-		if self.gold >= gold then
-			self.gold = self.gold - gold
-		else
+		if self.gold < gold then
+			-- sub money move into game 
 			local toclient = {}
 			toclient.result = ErrorCode.GOLD_NOT_ENOUGH
 			self:sendPacket( "ResKeepBanker", toclient )
+
 			toroom.iskeep = 1
 		end
 	end
+
 	local ret = skynet.call( room_sn, "lua", "plyaerKeepBanker", toroom )
+	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] keepBanker iskeep[%d], result[%d]", 
+		self.id, toroom.iskeep, ret))
 end
 
 --[[beginTuibing 庄家开始游戏
@@ -328,12 +347,7 @@ function player:betTuibing(pos, gold)
 	toroom.pos = pos
 	toroom.gold = gold
 	local ret = skynet.call( room_sn, "lua", "playerBet", toroom )
-	if ret == 0 then
-		local info = {}
-		info.gold = -gold
-		info.logtype = GoldLog.TUIBONG_BET
-		self:addGold( info )
-	end
+	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] bet, result[%d]",self.id, ret))
 end
 
 function player:getTuibingAllPlayer()
@@ -375,13 +389,21 @@ end
 
 --[[ 他人登陆，本号被顶掉 ]]
 function player:otherLogin()
+	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] otherLogin!", self.id))
 	local tootherclient = {}
 	tootherclient.type = 1
 	self:sendPacket( "ToCloseClient", tootherclient )
 	CMD.close()
 end
 
-
+--[[ 断开连接 ]]
+function player:beforeDisconnect()
+	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] Disconnect!", self.id))
+	local tootherclient = {}
+	tootherclient.type = 2
+	self:sendPacket( "ToCloseClient", tootherclient )
+	CMD.close()
+end
 
 function CMD.init( conf )
 	player.__init__()
@@ -390,7 +412,7 @@ function CMD.init( conf )
 end
 
 function CMD.close()
-	skynet.error("Player end", player.id )
+	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] close!", self.id))
 	skynet.send( ".PlayerManager", "lua", "delPlayer", player.id )
 
 	if player.room_info.room_id ~= 0 then

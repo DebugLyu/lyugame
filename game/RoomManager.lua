@@ -97,10 +97,10 @@ function CMD.test( ... )
 end
 
 
-function exit(  )
+function ServiceExit(  )
 	local topmgr = {}
 	topmgr.from = 1
-	skynet.call( ".PlayerManager", "lua", "ServerCloseBack", topmgr )
+	skynet.send( ".PlayerManager", "lua", "ServerCloseBack", topmgr )
 	skynet.timeout(5*100, function( ... )
 		skynet.exit()	
 	end)
@@ -114,7 +114,11 @@ function checkCloseRoom()
 		end
 	end
 	if noerror then
-		exit()
+		ServiceExit()
+	else
+		skynet.timeout(5*100, function( ... )
+			checkCloseRoom()
+		end)
 	end
 end
 --[[
@@ -129,11 +133,10 @@ function CMD.RoomCloseBack( info )
 	checkCloseRoom()
 end
 
-function CMD.close()
+function CMD.ServiceClose()
 	for room_id, room_info in pairs(room_list) do
-		local ok = skynet.call( room_info.sn, "lua", "close" )
+		local ok = skynet.call( room_info.sn, "lua", "ServiceClose" )
 		if ok == true then
-			skynet.kill( room_info.sn )
 			room_info.state = RoomState.Close
 		else
 			room_info.state = RoomState.Closing

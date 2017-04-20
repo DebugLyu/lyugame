@@ -1,6 +1,7 @@
 -- main.lua
 local skynet = require("skynet")
 local lpbc = require("protobuf")
+local datacenter = require "datacenter"
 
 skynet.start(function()
 	skynet.error("Server start")
@@ -23,5 +24,8 @@ skynet.start(function()
 	-- 	nodelay = true,
 	-- })
 	skynet.send(".RoomManager", "lua", "CreateTuiBing")
+
+	datacenter.set("ServerState", 1)
+
 	skynet.exit()
 end)

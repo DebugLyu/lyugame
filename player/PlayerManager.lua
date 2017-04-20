@@ -2,6 +2,8 @@
 local skynet = require "skynet" 
 require "skynet.manager"
 
+local datacenter = require "datacenter"
+
 local tinsert = table.insert
 local tremove = table.remove
 
@@ -96,21 +98,67 @@ function CMD.test_1( ... )
 	print("aaaaaaaaaa")
 end
 
-function CMD.close()
-	skynet.call( ".RoomManager", "lua", "close" )
+--[[
+	player manager part-time service manager
+
+	close function call other service close function, other service return back ServerCloseBack
+	after all service close, player manager save player data, and exit self
+
+	now has 
+]]
+function CMD.ServiceClose()
+	datacenter.set("ServerState", 0)
+	skynet.send( ".RoomManager", "lua", "ServiceClose" )
+
+	skynet.send( web_service, "lua", "ServiceClose" )
+	return 0
+end
+
+function checkPlayer()
+	local canclose = true
+	for k,v in pairs(player_list) do
+		if v then
+			canclose = false
+		end
+	end
+	if canclose then
+		skynet.timeout(5*100, function( ... )
+			skynet.exit()	
+		end)
+	else
+		skynet.timeout(5*100, function( ... )
+			checkPlayer()
+		end)
+	end
+end
+
+function ServiceExit( ... )
+	for id,p in pairs( player_list ) do
+		skynet.call( p.player_sn, "lua", "beforeDisconnect" )
+	end
+	
+	checkPlayer()
 end
 --[[
 	info 
 		from 
 			1 RoomManager
+			2 WebService
+	Ldatabase exit by debug console
 ]]
+local service_list = { [1] = false, [2] = false, }
 function CMD.ServerCloseBack(info)
-	for id,p in pairs( player_list ) do
-		skynet.call( p.player_sn, "lua", "close" )
+	service_list[info.from] = true
+
+	local canclose = true
+	for k,v in pairs(service_list) do
+		if v == false then
+			canclose = false
+		end
 	end
-	skynet.timeout(5*100, function( ... )
-		skynet.exit()	
-	end)
+	if canclose then
+		ServiceExit()
+	end
 end
 
 skynet.start(function(  )

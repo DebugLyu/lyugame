@@ -10,6 +10,8 @@ GoldLog = {
 	TUIBONG_BET = 5, -- 推饼下注
 	TUIBING_BANKER_WIN = 6, --当庄 赢钱
 	TUIBING_PLAYER_WIN = 7, -- 玩家赢钱
+	TUIBING_KEEP_BANKER = 8, -- 续庄
+	TUIBING_SYSTEM_PRE = 888, -- 系统抽水
 	GM_ADD = 900, -- 客户端GM添加
 	GM_ADD_PAYMENT = 901, -- 内部充值
 	GM_ADD_INSIDE = 902, -- 充值
@@ -40,7 +42,7 @@ TuiBingConfig = {
 	POS_SKY = 2,
 	POS_NORTH = 3,
 
-	BANKER_LIMIT_TIMES = 10, -- 最高坐庄次数
+	BANKER_LIMIT_TIMES = 25, -- 最高坐庄次数
 	WAIT_BEGIN = 6, -- 等待开始游戏时间
 	WAIT_KEEP = 31, -- 等待续庄时间
 	WAIT_BET = 16, -- 等待押注时间
