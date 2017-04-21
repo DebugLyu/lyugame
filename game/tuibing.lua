@@ -148,30 +148,23 @@ end
 		param3
 ]]
 local function toAddGold( info )
-	local toplayer = {}
-	toplayer.gold = info.gold
-	toplayer.logtype = info.logtype
-	toplayer.param1 = info.param1 or 0
-	toplayer.param2 = info.param2 or ""
-	toplayer.param3 = info.param3 or 0
+	local allinfo = {}
+	allinfo.player_id = info.player_id
+	allinfo.gold = info.gold
+	allinfo.logtype = info.logtype
+	allinfo.param1 = info.param1 or 0
+	allinfo.param2 = info.param2 or ""
+	allinfo.param3 = info.param3 or 0
 
 	-- 先查询房间数据
-	local player_info = player_list[info.player_id]
+	local player_info = player_list[allinfo.player_id]
 	if player_info then
-		config.Ldump( toplayer, "TuiBing.toAddGold.RoomPlayer")
-		return skynet.call( player_info.player_sn, "lua", "addGold", toplayer )
+		config.Ldump( allinfo, "TuiBing.toAddGold.RoomPlayer")
+		return skynet.call( player_info.player_sn, "lua", "addGold", allinfo )
 	end
 	-- 询问 PlayerManager
-	local sn = skynet.call( ".PlayerManager", "lua", "getPlayerSN", info.player_id )
-	if sn ~= 0 then
-		config.Ldump( toplayer, "TuiBing.toAddGold.GamePlayer")
-		return skynet.call( sn, "lua", "addGold", toplayer )
-	end
-	-- 直接赋值数据库
-	local todb = toplayer
-	todb.player_id = info.player_id
-	config.Ldump( todb, "TuiBing.toAddGold.todb")
-	return skynet.call( ".DBService", "lua", "PlayerAddGold", todb )
+	local ret = skynet.call( ".PlayerManager", "lua", "changeGold", allinfo )
+	return ret
 end
 
 local function toAskBankerBegin( sn )
@@ -195,8 +188,8 @@ end
 
 function TuiBing:unBebanker()
 	if self.banker.player_id ~= 0 then
-		config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d] player[%d] unBebanker, send back gold[%d]",
-			self.room_id, self.banker.player_id, self.banker.banker_gold) )
+		config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d][%d] player[%d] unBebanker, send back gold[%d]",
+			self.room_id, self.game_serial, self.banker.player_id, self.banker.banker_gold) )
 
 		local goldinfo = {}
 		goldinfo.player_id = self.banker.player_id
@@ -385,7 +378,8 @@ function TuiBing:GameReward()
 	self.state = TuiBingState.Reward
 	skynet.stoptimer(game_state_timer)
 	self:sendGameState()
-	config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d][%d] state Reward", self.room_id, self.game_serial) )
+	config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d][%d] state Reward", 
+		self.room_id, self.game_serial) )
 
 	local function isdouble( tbl )
 		local double = false
@@ -637,6 +631,9 @@ function TuiBing:playerUnBanker( player_id )
 	if self.banker.player_id ~= player_id then
 		return ErrorCode.NOT_BANKER
 	end
+	config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d][%d] Player[%d] ask unBanker", 
+	 						self.room_id, self.game_serial, player_id ) )
+
 	self.banker.banker_state = PlayerState.UnBanker
 	return 0
 end
@@ -663,7 +660,8 @@ function TuiBing:playerLeaveQueue( player_id )
 
 	if changed then
 		self:sendBankerQueueInfo()
-		config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d] player[%d]LeaveQueue", self.room_id, player_id) )
+		config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d][%d] player[%d] LeaveQueue", 
+			self.room_id, self.game_serial, player_id) )
 		return 0
 	else
 		return ErrorCode.NOT_IN_QUEUE
@@ -734,6 +732,8 @@ function TuiBing:plyaerKeepBanker( info )
 	 					game_state_timer = skynet.timeout( TuiBingConfig.WAIT_BEGIN*100, function()
 	 						self:GameReady()
 	 					end )
+	 					config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d][%d] Player[%d] use gold[%d] keep banker, total gold[%d]", 
+	 						self.room_id, self.game_serial, info.player_id, info.gold, self.banker.banker_gold) )
 	 				else
 	 					-- be keep, but gold still less than begin game
 	 					self:unBebanker()

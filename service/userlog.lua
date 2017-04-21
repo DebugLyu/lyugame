@@ -8,6 +8,7 @@ require "skynet.manager"
 
 local logtxt = ""
 local tmptxt = ""
+
 function write_file()
 	tmptxt = logtxt
 	logtxt = ""
@@ -44,8 +45,20 @@ skynet.register_protocol {
 	end
 }
 
+local CMD = {}
+
+function CMD.flush( ... )
+	write_file()
+end
+
 skynet.start(function()
 	skynet.register ".logger"
+
+	skynet.dispatch("lua", function(session, source, cmd, ...)
+		local f = assert(CMD[cmd])
+		f(...)
+	end)
+
 	skynet.fork( function( ... )
 		while true do
 			skynet.sleep( 100 * 300 )

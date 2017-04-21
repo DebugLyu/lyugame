@@ -43,13 +43,79 @@ function CMD.checkPlayerName( name )
 	-- 		relogin( name, p )
 	-- 	end
 	-- end
-	for id,p in pairs(player_list) do
-		if p.player_name == name then
-			return 1
+	-- for id,p in pairs(player_list) do
+	-- 	if p.player_name == name then
+	-- 		return 1
+	-- 	end
+	-- end
+	-- player_seed = player_seed + 1
+	-- return player_seed
+end
+
+--[[
+	return 
+		name is number 0 no user
+			 is string is user name
+]]
+function CMD.getPlayerNameById( id )
+	local pinfo = player_list[ player_id ]
+	if pinfo then
+		return pinfo.player_name
+	end
+
+	local todb = {}
+	todb.player_id = id
+	local ret = skynet.call( ".DBService", "lua", "getPlayerInfo", todb )
+	local name = ""
+	if type( ret ) == "number" then
+		name = ret
+	elseif type( ret ) == "table" then
+		name = ret.name
+	end
+	return name
+end
+
+--[[
+	Player change gold
+	WARRING: cut gold, player must be online. add gold can use for online and outline
+	
+	param: info 
+		player_id
+		gold 	-n ~ n
+		logtype
+		- param1	int
+		- param2 	string 
+		- param3	int
+]]
+function CMD.changeGold(info)
+	if info.player_id == 0 then
+		return 0
+	end
+	if info.gold == 0 then
+		return 0
+	end
+
+	info.param1 = info.param1 or 0
+	info.param2 = info.param2 or ""
+	info.param3 = info.param3 or 0
+
+	local pinfo = player_list[ info.player_id ]
+	local ret = 0
+	if pinfo then
+		-- online
+		config.Ldump( info, "PlayerManager.addGold.OnlinePlayer")
+		ret = skynet.call( pinfo.player_sn, "lua", "addGold", info )
+	else
+		-- outline
+		if info.gold > 0 then
+			-- save to db
+			config.Ldump( info, "PlayerManager.addGold.OutlinePlayer")
+			ret = skynet.call( ".DBService", "lua", "PlayerAddGold", info )
+		else
+			ret = ErrorCode.NOT_ONLINE
 		end
 	end
-	player_seed = player_seed + 1
-	return player_seed
+	return ret 
 end
 
 function CMD.delPlayer( player_id )
@@ -85,7 +151,9 @@ function CMD.getPlayerSNByAccount( player_account )
 	return sn
 end
 
--- t type: default 0 全体 1 大厅 
+--[[
+	t :type default 0 all 1 hall 
+]]
 function CMD.broadcast( t, pkg )
 	for id,p in pairs( player_list ) do
 		if t == 0 or ( t == 1 and p.roomid == 0 ) then
@@ -109,7 +177,6 @@ end
 function CMD.ServiceClose()
 	datacenter.set("ServerState", 0)
 	skynet.send( ".RoomManager", "lua", "ServiceClose" )
-
 	skynet.send( web_service, "lua", "ServiceClose" )
 	return 0
 end
@@ -122,6 +189,7 @@ function checkPlayer()
 		end
 	end
 	if canclose then
+		skynet.send( ".logger", "lua", "flush" )
 		skynet.timeout(5*100, function( ... )
 			skynet.exit()	
 		end)

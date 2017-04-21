@@ -6,7 +6,8 @@ ErrorCode.DBSERVICE_ERROR = 99
 ErrorCode.NO_ACCOUNT = 101
 ErrorCode.PASSWORD_ERROR = 102
 ErrorCode.HAS_ONLINE = 103
-
+ErrorCode.NO_USER_ID = 105
+ErrorCode.NOT_ONLINE = 106
 
 ErrorCode.ROOM_NOT_FOUND = 201
 ErrorCode.ROOM_FULL = 202

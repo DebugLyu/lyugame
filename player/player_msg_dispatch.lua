@@ -100,11 +100,33 @@ function tuibingallplayer( pack )
 	player:getTuibingAllPlayer()
 end
 
+function getplayername( pack )
+	local index = pack.index
+	local id = pack.id
+
+	local toplayer = {}
+	toplayer.result = 0
+	toplayer.id = id
+	toplayer.index = index
+	toplayer.name = ""
+	local ret = skynet.call( ".PlayerManager", "lua", "getPlayerNameById", id )
+	if type(ret) == "number" then
+		toplayer.result = ret
+	elseif type( ret ) == "string" then
+		toplayer.name = ret
+	else
+		config.Lprint( 1, string.format("[ERROR] packet Error, getplayername check error userid[%d]", id ))
+		return
+	end
+	player:sendPacket( "ResCheckName", toplayer );
+end
+
 MSG = {
 	["Reqlogin"] = login,
 	["ReqRegister"] = register,
 	["ReqEnterRoom"] = enterroom,
 	["ReqLeaveRoom"] = leaveroom,
+	["ReqCheckName"] = getplayername,
 	-- 推饼相关
 	["ReqBeBanker"] = bebanker,
 	["ReqKeepBanker"] = keepbanker,

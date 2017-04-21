@@ -42,6 +42,7 @@ function player:loginSuccess( roleinfo )
 	self.id = roleinfo.id
 	self.name = roleinfo.name
 	self.account = roleinfo.account
+	self.password = roleinfo.password
 	self.id = roleinfo.id
 	self.name = roleinfo.name
 	self.gold = roleinfo.gold
@@ -51,7 +52,6 @@ function player:loginSuccess( roleinfo )
 		player_name = self.name,
 		player_account = self.account,
 		room_info = self.room_info,
-		player_ws = self.ws_id,
 		player_sn = skynet.self()
 	};
 	skynet.send( ".PlayerManager", "lua", "addPlayer", toplayermanager )
@@ -377,6 +377,12 @@ function player:sendMahJong( pai )
 	end
 end
 
+
+--[[
+/////////////////////功能相关//////////////////////////
+
+]]
+
 function player:save()
 	if self.id == 0 then
 		return
@@ -412,7 +418,7 @@ function CMD.init( conf )
 end
 
 function CMD.close()
-	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] close!", self.id))
+	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] close!", player.id))
 	skynet.send( ".PlayerManager", "lua", "delPlayer", player.id )
 
 	if player.room_info.room_id ~= 0 then

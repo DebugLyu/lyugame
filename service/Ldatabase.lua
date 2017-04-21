@@ -1,12 +1,8 @@
 -- Ldatabase.lua
-
 local skynet = require "skynet"
 require "skynet.manager"
 
 local mysql = require "mysql"
-
-local CMD = {}
-
 local config = require "config"
 require "errorcode"
 
@@ -19,8 +15,11 @@ local sqls = {
 	["save"] = "UPDATE user SET gold = %d WHERE id = %d",
 	["addgold"] = "UPDATE user SET gold = gold + %d WHERE id = %d",
 	["addgoldlog"] = "INSERT INTO logs ( `playerid`, `num`, `type`, `param1`, `param2`, `param3`, `date`) values \
-					( '%d', '%d', '%d', '%d', '%s', '%d', now())"
+					( '%d', '%d', '%d', '%d', '%s', '%d', now())",
+	["userinfo"] = "SELECT * FROM user WHERE id='%d'",
 }
+
+local CMD = {}
 
 function CMD.run( sql )
 	local res =  db:query( sql )
@@ -41,7 +40,7 @@ function CMD.UserLogin( account, password )
 		end
 	else
 		ret.result = ErrorCode.DBSERVICE_ERROR
-		skynet.error("[ERROR] DBService UserLogin failed, account =", account)
+		config.Lprint(1, string.format("[ERROR] DB Error, UserLogin failed, account =", account))
 	end
 	return ret
 end
@@ -68,7 +67,7 @@ function CMD.UserRegister( account, password )
 		end
 	else
 		ret.result = ErrorCode.DBSERVICE_ERROR
-		skynet.error("[ERROR] DBService UserRegister failed, account =", account)
+		config.Lprint(1, string.format("[ERROR] DB Error, UserRegister failed, account =", account))
 	end
 	
 	return ret
@@ -98,7 +97,7 @@ function CMD.PlayerAddGold( info )
 		end
 	end
 	-- skynet.error( string.format("[ERROR] player[%d] add gold error "))
-	config.Lprint( 1, string.format( "[ERROR] player[%d] add gold[%d] error", info.player_id, info.gold ) )
+	config.Lprint( 1, string.format( "[ERROR] DB Error, player[%d] add gold[%d] error", info.player_id, info.gold ) )
 	config.Ldump( res, "DB.PlayerAddGold.res" )
 	return 1
 end
@@ -124,6 +123,35 @@ function CMD.PlayerAddGoldLog( info )
 	local res = CMD.run( sql )
 
 	return 0
+end
+
+--[[
+	info
+		player_id : id must > 0
+
+	return
+		number is error code
+		tbl is success role info tbl
+]]
+function CMD.getPlayerInfo( info )
+	if info.player_id == nil or info.player_id == 0 then
+		return
+	end
+
+	local sql = string.format( sqls[ "userinfo" ], info.player_id )
+	local res = CMD.run( sql )
+	local ret = 0
+	if type( res ) == "table" then
+		if #res == 0 then
+			ret = ErrorCode.NO_USER_ID
+		else
+			ret = res[1]
+		end
+	else
+		ret = ErrorCode.DBSERVICE_ERROR
+		config.Lprint(1, string.format( "[ERROR] DB Error, DBService UserLogin failed, account =", account))
+	end
+
 end
 
 --[[save player info
