@@ -24,6 +24,7 @@ function player.__init__()
 	-- 网络信息
 	player.ws_id = 0
 	player.ws_service = 0
+	player.ws_ip = ""
 end
 
 function player:sendPacket( head, tbl )
@@ -82,7 +83,7 @@ function player:loginSuccess( roleinfo )
 	toclient.gmlevel = self.gmlevel
 	self:sendPacket( "Reslogin", toclient )
 
-	config.Lprint(1, string.format("[PLAYERINFO] player[%d] loginSuccess", self.id))
+	config.Lprint(1, string.format("[PLAYERINFO] player[%d] from ip[%s] loginSuccess", self.id, self.ws_ip))
 end
 
 function player:login( account, password )
@@ -92,6 +93,7 @@ function player:login( account, password )
 		name = 0,
 		gold = 0,
 	}
+
 	local ret = skynet.call( ".DBService", "lua", "UserLogin", account )
 	local toclient = {}
 	toclient.result = 0
@@ -100,7 +102,7 @@ function player:login( account, password )
 	toclient.gold = 0
 	toclient.gmlevel = 0
 	if ret.result == 0 then
-		if ret.roleinfo.password == password then
+		if ret.roleinfo.password == password then			
 			-- 判断是否在线
 			local sn = skynet.call( ".PlayerManager", "lua", "getPlayerSN", ret.roleinfo.id )
 			if sn == 0 then
@@ -513,6 +515,7 @@ function CMD.init( conf )
 	player.__init__()
 	player.ws_id = conf.ws_id
 	player.ws_service = conf.ws_service
+	player.ws_ip = conf.ws_ip
 end
 
 function CMD.close()

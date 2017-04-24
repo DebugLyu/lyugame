@@ -2,6 +2,7 @@ local pb = require "protobuf"
 local skynet = require "skynet"
 require "skynet.manager"
 
+local md5 = require "md5"
 require "gameconfig"
 
 local MSG = {}
@@ -12,6 +13,7 @@ function login( pack )
 	-- print("pack", type(pack), pack)
 	local account = pack.account or ""
 	local password = pack.password or ""
+	password = md5.sumhexa( password )
 
 	if account == "" then
 		return
@@ -22,6 +24,7 @@ end
 function register( pack )
 	local account = pack.account
 	local password = pack.password
+	password = md5.sumhexa( password )
 
 	local ret = skynet.call( ".DBService", "lua", "UserRegister", account, password )
 	if ret.result ~= 0 then

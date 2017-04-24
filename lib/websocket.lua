@@ -102,7 +102,7 @@ function H.on_pong(ws, data)
 end
 
 
-function ws.new(id, header, handler, conf)
+function ws.new(id, addr, header, handler, conf)
     local conf = conf or {}
     local handler = handler or {}
     setmetatable(handler, { __index = H })
@@ -116,15 +116,13 @@ function ws.new(id, header, handler, conf)
     end
     local self = {
         id = id,
+        ip = addr,
         handler = handler,
         client_terminated = false,
         server_terminated = false,
         mask_outgoing = conf.mask_outgoing,
         check_origin = conf.check_origin
     }
-    for k,v in pairs(handler) do
-        print(k,v)
-    end
     self.handler.on_open(self)
     return setmetatable(self, ws_mt)
 end

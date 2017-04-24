@@ -24,7 +24,7 @@ function handler.on_open(ws)
     config.Lprint(1, string.format("%d::open", ws.id))
 
     local player = skynet.newservice("player")
-    skynet.call(player, "lua", "init", { ws_id = ws.id, ws_service = skynet.self() })
+    skynet.call(player, "lua", "init", { ws_id = ws.id, ws_ip = ws.ip, ws_service = skynet.self() })
     player_list[ ws.id ] = player
     ws_list[ws.id] = ws
     -- local agent = skynet.newservice("agent")
@@ -67,7 +67,7 @@ function handler.on_close(ws, code, reason)
     ws_list[ws.id] = nil
 end
 
-local function handle_socket(id)
+local function handle_socket(id, addr)
     -- limit request body size to 8192 (you can pass nil to unlimit)
     local state = datacenter.get("ServerState")
     state = tonumber( state ) or 0
@@ -77,7 +77,7 @@ local function handle_socket(id)
     local code, url, method, header, body = httpd.read_request(sockethelper.readfunc(id), nil)
     if code then
         if url == "/ws" then
-            local ws = websocket.new(id, header, handler)
+            local ws = websocket.new(id, addr, header, handler)
             ws:start()
         end
     end
@@ -119,8 +119,8 @@ skynet.start(function()
     local id = assert(socket.listen(address))
 
     socket.start(id , function(id, addr)
-       socket.start(id)
-       pcall(handle_socket, id)
+        socket.start(id)
+        pcall(handle_socket, id, addr)
     end)
 
     skynet.dispatch( "lua", function( _,_, common, ... )

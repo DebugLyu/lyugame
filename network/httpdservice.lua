@@ -6,11 +6,12 @@ local urllib = require "http.url"
 local config = require "config"
 local table = table
 local string = string
+local md5 = require "md5"
 
 require "gameconfig"
 require "errorcode"
 
-
+local keycode = "xhqipai"
 local mode = ...
 
 if mode == "agent" then
@@ -21,6 +22,26 @@ local function response(id, ...)
 		-- if err == sockethelper.socket_error , that means socket closed.
 		skynet.error(string.format("fd = %d, %s", id, err))
 	end
+end
+
+local function checkSign( act, req )
+	local str = ""
+
+	local gm = req.gm
+	local time = req.time
+	local player_id = tonumber( req.uid ) or 0
+	if act == HttpAction.PAYMENT then
+		local gold = tonumber(req.gold) or 0		
+		str = gm .. gold .. player_id .. time .. keycode
+	elseif act == HttpAction.KICK then
+		str = gm .. player_id .. time .. keycode
+	elseif act == HttpAction.SEAL then
+		local timestamp = tonumber( req.timestamp ) or 0 
+		str = gm .. player_id .. time .. timestamp .. keycode
+	else
+
+	end
+	return md5.sumhexa( str )
 end
 
 local function playerPayment( gm_account, host, player_id, gold )
@@ -101,8 +122,9 @@ local function playerSeal( gm_account, host, player_id, timestamp )
 end
 
 skynet.start(function()
-	skynet.dispatch("lua", function (_,_,id)
+	skynet.dispatch("lua", function (_,_,id,addr)
 		socket.start(id)
+
 		-- limit request body size to 8192 (you can pass nil to unlimit)
 		local code, url, method, header, body = httpd.read_request(sockethelper.readfunc(id), 8192)
 		if code then
@@ -124,31 +146,31 @@ skynet.start(function()
 					end
 				end
 				local act = tonumber( req.action )
+				local sign_server = checkSign(req)
+				local sign_php = req.sign 
 				local result = 0
-				
-				if act == HttpAction.PAYMENT then
-					local gm = req.gm
-					local gold = tonumber(req.gold) or 0
-					local player_id = tonumber( req.uid ) or 0
-					result = playerPayment( gm, header.host, player_id, gold )
-				elseif act == HttpAction.KICK then
-					local gm = req.gm
-					local player_id = tonumber( req.uid ) or 0
-					result = playerKicked( gm, header.host, player_id )
-				elseif act == HttpAction.SEAL then
-					local gm = req.gm
-					local player_id = tonumber( req.uid ) or 0
-					local timestamp = tonumber( req.timestamp ) or 0 
-					result = playerSeal( gm, header.host, player_id, timestamp )
+				if sign_php == sign_server then
+					if act == HttpAction.PAYMENT then
+						local gm = req.gm
+						local gold = tonumber(req.gold) or 0
+						local player_id = tonumber( req.uid ) or 0
+						result = playerPayment( gm, addr, player_id, gold )
+					elseif act == HttpAction.KICK then
+						local gm = req.gm
+						local player_id = tonumber( req.uid ) or 0
+						result = playerKicked( gm, addr, player_id )
+					elseif act == HttpAction.SEAL then
+						local gm = req.gm
+						local player_id = tonumber( req.uid ) or 0
+						local timestamp = tonumber( req.timestamp ) or 0 
+						result = playerSeal( gm, addr, player_id, timestamp )
+					else
+						-- config.Lprint( 1, string.format( "[ERROR] host[%s] request action[%s] error.", header.host, tostring(act) ) )
+						result = ErrorCode.PARAM_ERROR
+					end
 				else
-					-- config.Lprint( 1, string.format( "[ERROR] host[%s] request action[%s] error.", header.host, tostring(act) ) )
-					result = ErrorCode.PARAM_ERROR
+					result = ErrorCode.SIGN_ERROR
 				end
-				-- table.insert(tmp, "-----header----")
-				-- for k,v in pairs(header) do
-					-- table.insert(tmp, string.format("%s = %s",k,v))
-				-- end
-				-- table.insert(tmp, "-----body----\n" .. body)
 				response(id, code, result.."")
 			end
 		else
@@ -174,7 +196,7 @@ skynet.start(function()
 	skynet.error("Listen web port 8001")
 	socket.start(id , function(id, addr)
 		skynet.error(string.format("%s connected, pass it to agent :%08x", addr, agent[balance]))
-		skynet.send(agent[balance], "lua", id)
+		skynet.send(agent[balance], "lua", id, addr)
 		balance = balance + 1
 		if balance > #agent then
 			balance = 1

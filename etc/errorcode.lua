@@ -33,6 +33,7 @@ ErrorCode.DB_PLAYER_NOT_FOUND = 701		-- 数据库错误，找不到玩家
 
 -- HTTP
 ErrorCode.PARAM_ERROR = 801 			-- 运行参数错误
+ErrorCode.SIGN_ERROR = 802				-- 验证失败
 -- GM
 ErrorCode.PERMISSION_DENIED = 901		-- 权限不足
 ErrorCode.LOGTYPE_ERROR = 902			-- 日志类型错误
