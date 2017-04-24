@@ -3,6 +3,7 @@ local skynet = require "skynet"
 require "skynet.manager"
 
 local datacenter = require "datacenter"
+local config = require( "config" )
 
 local tinsert = table.insert
 local tremove = table.remove
@@ -15,6 +16,8 @@ local player_outline_pool = {}
 local CMD = {}
 
 local player_seed = 100000
+
+local SYSTEM_SEND_GOLD = "系统赠送"
 
 function relogin( name, p )
 	
@@ -58,11 +61,13 @@ end
 			 is string is user name
 ]]
 function CMD.getPlayerNameById( id )
+	if id == 0 then
+		return SYSTEM_SEND_GOLD
+	end
 	local pinfo = player_list[ player_id ]
 	if pinfo then
 		return pinfo.player_name
 	end
-
 	local todb = {}
 	todb.player_id = id
 	local ret = skynet.call( ".DBService", "lua", "getPlayerInfo", todb )
@@ -86,10 +91,15 @@ end
 		- param1	int
 		- param2 	string 
 		- param3	int
+	return: ret
+		result 
+		flag :  1 change to player
+				2 change to db
 ]]
 function CMD.changeGold(info)
 	if info.player_id == 0 then
-		return 0
+		config.Lprint( 2, "[ERROR] PlayerManager changeGold player[0] -- " .. debug.traceback() )
+		return -1
 	end
 	if info.gold == 0 then
 		return 0
@@ -100,19 +110,23 @@ function CMD.changeGold(info)
 	info.param3 = info.param3 or 0
 
 	local pinfo = player_list[ info.player_id ]
-	local ret = 0
+	local ret = {}
+	ret.result = -1
+	ret.flag = 0
 	if pinfo then
 		-- online
-		config.Ldump( info, "PlayerManager.addGold.OnlinePlayer")
-		ret = skynet.call( pinfo.player_sn, "lua", "addGold", info )
+		config.Ldump( info, "PlayerManager.changeGold.OnlinePlayer")
+		ret.result = skynet.call( pinfo.player_sn, "lua", "addGold", info )
+		ret.flag = 1
 	else
 		-- outline
 		if info.gold > 0 then
 			-- save to db
-			config.Ldump( info, "PlayerManager.addGold.OutlinePlayer")
-			ret = skynet.call( ".DBService", "lua", "PlayerAddGold", info )
+			config.Ldump( info, "PlayerManager.changeGold.OutlinePlayer")
+			ret.flag = 2
+			ret.result = skynet.call( ".DBService", "lua", "PlayerAddGold", info )
 		else
-			ret = ErrorCode.NOT_ONLINE
+			ret.result = ErrorCode.NOT_ONLINE
 		end
 	end
 	return ret 
@@ -166,6 +180,18 @@ function CMD.test_1( ... )
 	print("aaaaaaaaaa")
 end
 
+
+--[[
+	info 
+		player_id
+]]	
+function CMD.kickPlayer( info )
+	local pinfo = player_list[ info.player_id ]
+	if pinfo then
+		skynet.call( pinfo.player_sn, "lua", "beforeDisconnect" )
+	end
+	return 0
+end
 --[[
 	player manager part-time service manager
 

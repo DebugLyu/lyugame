@@ -164,7 +164,7 @@ local function toAddGold( info )
 	end
 	-- 询问 PlayerManager
 	local ret = skynet.call( ".PlayerManager", "lua", "changeGold", allinfo )
-	return ret
+	return ret.result
 end
 
 local function toAskBankerBegin( sn )
@@ -362,16 +362,16 @@ function TuiBing:GameDeal()
 	end)
 end
 
-local function systemPreLog( id, pos, gold )
+local function systemPreLog( id, pos, gold, serial )
 	local goldinfo = {}
 	goldinfo.player_id = 0
 	goldinfo.gold = gold
 	goldinfo.logtype = GoldLog.TUIBING_SYSTEM_PRE
 	goldinfo.param1 = id
 	goldinfo.param2 = tostring(pos)
-	goldinfo.param3 = self.game_serial
+	goldinfo.param3 = serial
 
-	skynet.call( ".DBService", "lua", "PlayerAddGoldLog", info )
+	skynet.call( ".DBService", "lua", "PlayerAddGoldLog", goldinfo )
 end
 
 function TuiBing:GameReward()
@@ -400,9 +400,9 @@ function TuiBing:GameReward()
 		if gold_count > 0 then
 			local banker_reward = math.ceil(gold_count * TuiBingConfig.PERCENTAGE)
 			local system_reward = gold_count - banker_reward
-			self.banker.banker_gold = self.banker.banker_gold + system_reward
+			self.banker.banker_gold = self.banker.banker_gold + banker_reward
 
-			systemPreLog( self.banker.player_id, system_reward, 0 )
+			systemPreLog( self.banker.player_id, system_reward, 0, self.game_serial )
 		end
 		return 0
 	end
@@ -488,7 +488,7 @@ function TuiBing:GameReward()
 					goldinfo.param3 = self.game_serial
 					toAddGold( goldinfo )
 
-					systemPreLog( player_id, system_reward, pos )
+					systemPreLog( player_id, system_reward, pos , self.game_serial )
 				end
 			end
 		end

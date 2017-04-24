@@ -25,6 +25,8 @@ skynet.start(function()
 	-- })
 	skynet.send(".RoomManager", "lua", "CreateTuiBing")
 
+	skynet.newservice( "httpdservice" )
+
 	datacenter.set("ServerState", 1)
 
 	skynet.exit()

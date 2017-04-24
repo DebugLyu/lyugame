@@ -205,13 +205,18 @@ message ResCheckName {
 
 //交易金币
 message ReqTradeGold {
-	required int32 fromid = 1;  // 交易来源方
-	required int32 toid = 2;	// 交易接收方
-	required int32 gold = 3; 	// 交易金额
+	required int32 toid = 1;	// 交易接收方
+	required int32 gold = 2; 	// 交易金额
 }
 
 message ResTradeGold {
 	required int32 result = 1;
+}
+
+message ToTreadeGold {
+	required int32 fromid = 1;  // 交易来源方id
+	required string fromname = 2;  // 交易来源名字
+	required int32 gold = 3; 	// 交易金额
 }
 
 //////////////////////////////麻将相关///////////////////

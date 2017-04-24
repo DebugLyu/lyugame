@@ -10,13 +10,16 @@ local db = nil
 
 local sqls = {
 	["login"] = "SELECT * FROM user WHERE account='%s';",
-	["register"] = "INSERT INTO user (account, name, password, gold) VALUES ('%s', '%s', '%s', 0);\
+	["register"] = "INSERT INTO user (account, name, password, gold, state, statedate, adddate) VALUES ('%s', '%s', '%s', 0, 0, 0, now());\
 					SELECT * FROM user WHERE account='%s';",
 	["save"] = "UPDATE user SET gold = %d WHERE id = %d",
 	["addgold"] = "UPDATE user SET gold = gold + %d WHERE id = %d",
-	["addgoldlog"] = "INSERT INTO logs ( `playerid`, `num`, `type`, `param1`, `param2`, `param3`, `date`) values \
+	["addgoldlog"] = "INSERT INTO logs ( `playerid`, `num`, `type`, `param1`, `param2`, `param3`, `date`) VALUES \
 					( '%d', '%d', '%d', '%d', '%s', '%d', now())",
 	["userinfo"] = "SELECT * FROM user WHERE id='%d'",
+	["seal"] = "UPDATE user SET state = '%d', statedate = '%d' WHERE id = '%d'",
+	["httplog"] = "INSERT INTO httplogs (`gm`, `action`, `playerid`, `param1`, `param2`, `host`, `date` ) VALUES \
+					( '%s', '%d', '%d', '%d', '%d', '%s', now() )"
 }
 
 local CMD = {}
@@ -40,7 +43,7 @@ function CMD.UserLogin( account, password )
 		end
 	else
 		ret.result = ErrorCode.DBSERVICE_ERROR
-		config.Lprint(1, string.format("[ERROR] DB Error, UserLogin failed, account =", account))
+		config.Lprint(2, string.format("[ERROR] DB Error, UserLogin failed, account =", account))
 	end
 	return ret
 end
@@ -67,7 +70,7 @@ function CMD.UserRegister( account, password )
 		end
 	else
 		ret.result = ErrorCode.DBSERVICE_ERROR
-		config.Lprint(1, string.format("[ERROR] DB Error, UserRegister failed, account =", account))
+		config.Lprint(2, string.format("[ERROR] DB Error, UserRegister failed, account =", account))
 	end
 	
 	return ret
@@ -84,7 +87,7 @@ end
 ]]
 function CMD.PlayerAddGold( info )
 	if info.gold == 0 then
-		return 
+		return ErrorCode.PARAM_ERROR
 	end
 
 	local sql = string.format( sqls["addgold"], info.gold, info.player_id )
@@ -97,9 +100,9 @@ function CMD.PlayerAddGold( info )
 		end
 	end
 	-- skynet.error( string.format("[ERROR] player[%d] add gold error "))
-	config.Lprint( 1, string.format( "[ERROR] DB Error, player[%d] add gold[%d] error", info.player_id, info.gold ) )
+	config.Lprint( 2, string.format( "[ERROR] DB Error, player[%d] add gold[%d] error", info.player_id, info.gold ) )
 	config.Ldump( res, "DB.PlayerAddGold.res" )
-	return 1
+	return ErrorCode.DB_PLAYER_NOT_FOUND
 end
 --[[
 	info
@@ -112,7 +115,7 @@ end
 ]]
 function CMD.PlayerAddGoldLog( info )
 	if info.gold == 0 then
-		return
+		return ErrorCode.PARAM_ERROR
 	end
 	info.logtype = info.logtype or 0
 	info.param1 = info.param1 or 0
@@ -135,7 +138,7 @@ end
 ]]
 function CMD.getPlayerInfo( info )
 	if info.player_id == nil or info.player_id == 0 then
-		return
+		return ErrorCode.PARAM_ERROR
 	end
 
 	local sql = string.format( sqls[ "userinfo" ], info.player_id )
@@ -149,9 +152,54 @@ function CMD.getPlayerInfo( info )
 		end
 	else
 		ret = ErrorCode.DBSERVICE_ERROR
-		config.Lprint(1, string.format( "[ERROR] DB Error, DBService UserLogin failed, account =", account))
+		config.Lprint(2, string.format( "[ERROR] DB Error, DBService UserLogin failed, account[%s]", account))
 	end
+	return ret
+end
 
+--[[
+	info
+		player_id
+		state
+		statedate
+]]
+function CMD.statePlayer( info )
+	if info.player_id == nil or info.player_id == 0 then
+		return ErrorCode.PARAM_ERROR 
+	end
+	local sql = string.format( sqls[ "seal" ], info.state, info.statedate, info.player_id )
+	local res = CMD.run( sql )
+
+	if type( res ) == "table" then
+		if res.affected_rows >= 1 then
+			return 0
+		end
+	end
+	return ErrorCode.DBSERVICE_ERROR
+end
+
+--[[
+	info
+		gm : string gm string
+		action : 	int  1 payment 2 kick player 3 seal up player
+		player_id : int  1 payment to player id 2 kick player id 3 seal up player id
+		host : string gm host
+		param1 : 	int  1 payment gold 2 null 3 seal up to time
+		param2 : 	int  1 null 2 null 3 null
+]]
+function CMD.HttpLog(info)
+	if info.player_id == nil or info.player_id == 0 then
+		return ErrorCode.PARAM_ERROR 
+	end
+	if info.gm == nil or info.gm == "" then
+		return ErrorCode.PARAM_ERROR 
+	end
+	info.param1 = info.param1 or 0
+	info.param2 = info.param2 or 0
+	
+	local sql = string.format( sqls[ "httplog" ], info.gm, info.action, info.player_id, info.param1, info.param2, info.host )
+	local res = CMD.run( sql )
+	return 0
 end
 
 --[[save player info
@@ -183,9 +231,9 @@ skynet.start(function()
 		on_connect = on_connect
 	})
 	if not db then
-		skynet.error("failed to connect")
+		config.Lprint(1,"[INFO] DB failed to connect")
 	end
-	skynet.error("success to connect to mysql server")
+	config.Lprint(1,"[INFO] DB success to connect to mysql server")
 
 	skynet.dispatch( "lua", function(_,_, command, ...)
     	-- 注意命令方法 不要跟消息方法 重名，否则将会出错

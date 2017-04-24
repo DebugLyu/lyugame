@@ -8,7 +8,6 @@ local config = require "config"
 require "errorcode"
 require "gameconfig"
 
-
 player = {}
 local CMD = {}
 local MSG = require( "player_msg_dispatch" )
@@ -39,14 +38,33 @@ end
 
 function player:loginSuccess( roleinfo )
 	config.Ldump( roleinfo, "player.loginSuccess.roleinfo" )
+	if roleinfo.state == PlayerState.Seal then
+		if tonumber(roleinfo.statedate) > os.time() then
+			-- seal time
+			local toclient = {}
+			toclient.result = ErrorCode.ACCOUNT_SEAL
+			toclient.id = roleinfo.statedate
+			toclient.name = 0
+			toclient.gold = 0
+			toclient.gmlevel = 0
+			self:sendPacket( "Reslogin", toclient )
+			return
+		else
+			local todb = {}
+			todb.player_id = roleinfo.id
+			todb.state = PlayerState.Normal
+			todb.statedate = 0
+			skynet.send( ".DBService", "lua", "statePlayer", todb )
+		end
+	end
+
 	self.id = roleinfo.id
-	self.name = roleinfo.name
 	self.account = roleinfo.account
 	self.password = roleinfo.password
-	self.id = roleinfo.id
 	self.name = roleinfo.name
 	self.gold = roleinfo.gold
 	self.gmlevel = roleinfo.gmlevel
+
 	local toplayermanager = {
 		player_id = self.id,
 		player_name = self.name,
@@ -55,6 +73,7 @@ function player:loginSuccess( roleinfo )
 		player_sn = skynet.self()
 	};
 	skynet.send( ".PlayerManager", "lua", "addPlayer", toplayermanager )
+	
 	local toclient = {}
 	toclient.result = 0
 	toclient.id = self.id
@@ -101,6 +120,84 @@ function player:login( account, password )
 	if toclient.result ~= 0 then
 		self:sendPacket( "Reslogin", toclient )
 	end
+end
+
+function player:trade( id, gold )
+	local infoself = {}
+	infoself.player_id = self.id
+	infoself.gold = -gold
+	infoself.logtype = GoldLog.USER_TRADE
+	infoself.param1 = id
+
+	local toclient = {}
+	toclient.result = 0
+	local retself = self:addGold( infoself )
+
+	if retself == 0 then
+		local traget_gold = math.ceil( gold * TRADE_PERCENTAGE )
+		local system_gold = gold - traget_gold
+
+		local goldinfo = {}
+		goldinfo.player_id = 0
+		goldinfo.gold = gold
+		goldinfo.logtype = GoldLog.TUIBING_SYSTEM_TRADE_PRE
+		goldinfo.param1 = self.id
+		goldinfo.param3 = id
+		skynet.send( ".DBService", "lua", "PlayerAddGoldLog", goldinfo )
+
+		local info = {}
+		info.player_id = id
+		info.gold = traget_gold
+		info.logtype = GoldLog.USER_TRADE
+		info.param1 = self.id
+		local ret = skynet.call(".PlayerManager", "lua", "changeGold", info)
+		if ret.result == 0 then
+			config.Lprint( 1, string.format("[PLAYERINFO] player[%d] transfer gold[%d] to player[%d] got[%d], system got gold[%d]",
+				self.id, gold, id, traget_gold, system_gold) )
+
+			if ret.flag == 1 then
+				local sn = skynet.call(".PlayerManager", "lua", "getPlayerSN", id)
+				if sn > 0 then
+					local tootherclient = {}
+					tootherclient.player_id = self.id
+					tootherclient.gold = gold
+					skynet.send( sn, "lua", "gotTrade", tootherclient )
+				end
+			end
+		else
+			if ret.result ~= -1 then
+				toclient.result = ret.result
+			end
+			local infoback = {}
+			infoback.player_id = self.id
+			infoback.gold = gold
+			infoback.logtype = GoldLog.USER_TRADE_BACK
+			infoback.param1 = id
+			self:addGold( infoback )
+		end
+	else
+		toclient.result = retself
+	end
+	self:sendPacket( "ResTradeGold", toclient )
+end
+--[[
+	info
+		player_id
+		gold
+]]
+function player:gotTrade(info)
+	local name = skynet.call(".PlayerManager", "lua", "getPlayerNameById", info.player_id)
+	if name == 0 then
+		config.Lprint(2, string.format("[ERROR] player[%d] gotTrade Check target[%d] Name error!",
+			self.id, info.player_id))
+		name = ""
+	end
+
+	local toclient = {}
+	toclient.fromid = info.player_id
+	toclient.fromname = name
+	toclient.gold = info.gold
+	self:sendPacket( "ToTreadeGold", toclient )
 end
 
 function player:enterRoom( room_id )
@@ -179,6 +276,7 @@ function player:GMAddGold( id, gold, log )
 	config.Lprint(1, string.format("[GMINFO] GM[%d] add gold[%d] to player[%d], logtype[%d]", 
 		self.id, gold, id, log ))
 end
+
 --[[
 	info: 
 		player_id : 0

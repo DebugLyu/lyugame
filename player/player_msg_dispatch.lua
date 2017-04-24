@@ -28,7 +28,7 @@ function register( pack )
 		local tbl = {}
 		tbl.result = ret.result
 		player:sendPacket( "ResRegister", tbl )
-		skynet.error("[ERROR] MSG dispatch register failed, account = ", account)
+		config.Lprint(1, string.format("[INFO] register failed, account[%s], result[%d]", account, ret.result))
 	else
 		player:loginSuccess( ret.roleinfo )
 	end
@@ -115,10 +115,17 @@ function getplayername( pack )
 	elseif type( ret ) == "string" then
 		toplayer.name = ret
 	else
-		config.Lprint( 1, string.format("[ERROR] packet Error, getplayername check error userid[%d]", id ))
+		config.Lprint( 2, string.format("[ERROR] packet Error, getplayername check error userid[%d]", id ))
 		return
 	end
 	player:sendPacket( "ResCheckName", toplayer );
+end
+
+function tradegold( pack )
+	local target = pack.toid
+	local gold = pack.gold
+
+	player:trade( target, gold )
 end
 
 MSG = {
@@ -127,6 +134,8 @@ MSG = {
 	["ReqEnterRoom"] = enterroom,
 	["ReqLeaveRoom"] = leaveroom,
 	["ReqCheckName"] = getplayername,
+	-- 交互
+	["ReqTradeGold"] = tradegold,
 	-- 推饼相关
 	["ReqBeBanker"] = bebanker,
 	["ReqKeepBanker"] = keepbanker,
@@ -150,7 +159,7 @@ function MSG.MessageDispatch( head, msgbody )
 			func( code )
 		end
 	else
-		print(string.format("[ERROR] MSG Not define. head[%s]", head))
+		config.Lprint(2, string.format("[ERROR] MSG Not define. head[%s]", head))
 	end
 end
 

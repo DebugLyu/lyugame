@@ -122,6 +122,9 @@ function ws.new(id, header, handler, conf)
         mask_outgoing = conf.mask_outgoing,
         check_origin = conf.check_origin
     }
+    for k,v in pairs(handler) do
+        print(k,v)
+    end
     self.handler.on_open(self)
     return setmetatable(self, ws_mt)
 end
