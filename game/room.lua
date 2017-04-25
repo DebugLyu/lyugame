@@ -5,9 +5,7 @@ local seat = {
 	playerid = 0,
 	islocked = false,
 	isready = false,	
-},
-
-
+}
 
 local room = {
 	seedid = 0,

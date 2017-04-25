@@ -104,7 +104,7 @@ function Mahjong:broadcastReady()
 end
 
 function Mahjong:checkReady()
-	if times = 0
+	-- if times = 0
 	for pos, player_info in pairs(self.player_list) do
 		if player_info.player_state == PlayerState.Ready then
 			times = times + 1
@@ -306,7 +306,7 @@ end
 
 local function checkGang_Peng( pengs, pai )
 	for k, info in pairs( pengs ) do
-		if info.pai = pai then
+		if info.pai == pai then
 			return true, info.target, k
 		end
 	end
