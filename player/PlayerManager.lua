@@ -180,7 +180,6 @@ function CMD.test_1( ... )
 	print("aaaaaaaaaa")
 end
 
-
 --[[
 	info 
 		player_id
@@ -253,6 +252,13 @@ function CMD.ServerCloseBack(info)
 	if canclose then
 		ServiceExit()
 	end
+end
+--[[
+	call logger show unwrite logs
+]]
+function CMD.detail( ... )
+	local ret = skynet.call(".logger", "lua", "show")
+	return ret	
 end
 
 skynet.start(function(  )

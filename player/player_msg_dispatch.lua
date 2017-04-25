@@ -131,6 +131,12 @@ function tradegold( pack )
 	player:trade( target, gold )
 end
 
+function sendwin( pack )
+	local pos = pack.pos
+	local win = pack.win
+	player:controlTuibing( pos, win )
+end
+
 MSG = {
 	["Reqlogin"] = login,
 	["ReqRegister"] = register,
@@ -149,6 +155,7 @@ MSG = {
 	["ReqTuibingLeaveQueue"] = leavequeue,
 	["ReqTuiBingInfo"] = tuibinginfo,
 	["ReqTuiBingAllPlayer"] = tuibingallplayer,
+	["ReqSendWin"] = sendwin,
 	-- 麻将相关
 	["ReqMjSendMj"] = sendmahjong,
 }

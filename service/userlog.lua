@@ -51,12 +51,19 @@ function CMD.flush( ... )
 	write_file()
 end
 
+function CMD.show()
+	return logtxt
+end
+
 skynet.start(function()
 	skynet.register ".logger"
 
 	skynet.dispatch("lua", function(session, source, cmd, ...)
 		local f = assert(CMD[cmd])
-		f(...)
+		local r = f(...)
+		if r then
+			skynet.ret(skynet.pack(r))
+		end
 	end)
 
 	skynet.fork( function( ... )

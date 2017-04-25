@@ -167,9 +167,11 @@ function CMD.statePlayer( info )
 	if info.player_id == nil or info.player_id == 0 then
 		return ErrorCode.PARAM_ERROR 
 	end
+
 	local sql = string.format( sqls[ "seal" ], info.state, info.statedate, info.player_id )
 	local res = CMD.run( sql )
 
+	config.Ldump( res,  "res" )
 	if type( res ) == "table" then
 		if res.affected_rows >= 1 then
 			return 0
@@ -196,7 +198,7 @@ function CMD.HttpLog(info)
 	end
 	info.param1 = info.param1 or 0
 	info.param2 = info.param2 or 0
-	
+
 	local sql = string.format( sqls[ "httplog" ], info.gm, info.action, info.player_id, info.param1, info.param2, info.host )
 	local res = CMD.run( sql )
 	return 0

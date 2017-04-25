@@ -20,15 +20,16 @@ local function response(id, ...)
 	local ok, err = httpd.write_response(sockethelper.writefunc(id), ...)
 	if not ok then
 		-- if err == sockethelper.socket_error , that means socket closed.
-		skynet.error(string.format("fd = %d, %s", id, err))
+		config.Lprint(1, string.format("[HTTP] id[%d] response error[%s]", id, err))
 	end
 end
 
-local function checkSign( act, req )
+local function checkSign( req )
 	local str = ""
-
+	local act = tonumber( req.action )
 	local gm = req.gm
 	local time = req.time
+
 	local player_id = tonumber( req.uid ) or 0
 	if act == HttpAction.PAYMENT then
 		local gold = tonumber(req.gold) or 0		
@@ -37,7 +38,7 @@ local function checkSign( act, req )
 		str = gm .. player_id .. time .. keycode
 	elseif act == HttpAction.SEAL then
 		local timestamp = tonumber( req.timestamp ) or 0 
-		str = gm .. player_id .. time .. timestamp .. keycode
+		str = gm .. player_id .. timestamp .. time .. keycode
 	else
 
 	end
@@ -146,8 +147,13 @@ skynet.start(function()
 					end
 				end
 				local act = tonumber( req.action )
+				if act == nil then
+					return 0
+				end
+
 				local sign_server = checkSign(req)
 				local sign_php = req.sign 
+
 				local result = 0
 				if sign_php == sign_server then
 					if act == HttpAction.PAYMENT then
@@ -163,9 +169,11 @@ skynet.start(function()
 						local gm = req.gm
 						local player_id = tonumber( req.uid ) or 0
 						local timestamp = tonumber( req.timestamp ) or 0 
+						
 						result = playerSeal( gm, addr, player_id, timestamp )
 					else
 						-- config.Lprint( 1, string.format( "[ERROR] host[%s] request action[%s] error.", header.host, tostring(act) ) )
+						
 						result = ErrorCode.PARAM_ERROR
 					end
 				else
@@ -176,6 +184,7 @@ skynet.start(function()
 		else
 			if url == sockethelper.socket_error then
 				skynet.error("socket closed")
+				config.Lprint(1, string.format("[HTTP] id[%d] socket closed", id))
 			else
 				skynet.error(url)
 			end
@@ -195,7 +204,7 @@ skynet.start(function()
 	local id = socket.listen("0.0.0.0", 8002)
 	skynet.error("Listen web port 8001")
 	socket.start(id , function(id, addr)
-		skynet.error(string.format("%s connected, pass it to agent :%08x", addr, agent[balance]))
+		config.Lprint(1, string.format("[HTTP] id[%d][%s] connected, pass it to agent", id, addr, agent[balance]))
 		skynet.send(agent[balance], "lua", id, addr)
 		balance = balance + 1
 		if balance > #agent then

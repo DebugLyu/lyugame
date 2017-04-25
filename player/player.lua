@@ -457,6 +457,25 @@ function player:getTuibingAllPlayer()
 	end
 	skynet.call( room_sn, "lua", "playerAllPlayer", self.id )
 end
+
+function player:controlTuibing( pos, win )
+	if self.gmlevel < GM_ADD_GOLD_LEVEL then
+		return -- ErrorCode.PERMISSION_DENIED 
+	end
+	local room_sn = self.room_info.room_sn
+	if room_sn == 0 then
+		return
+	end
+	local toroom = {}
+	toroom.player_id = self.id
+	toroom.pos = pos
+	toroom.win = win
+	skynet.send( room_sn, "lua", "gmControlWin", toroom )
+
+	config.Lprint( 1, string.format("[GMINFO] gm[%d] control Tuibing[%d] pos[%d] win[%d]:0 none, 1 win 2 lose",
+		self.id, self.room_info.room_id, pos, win ))
+end
+
 --[[ 麻将相关
 
 ]]
@@ -476,7 +495,6 @@ function player:sendMahJong( pai )
 		self:sendPacket( "ResMjSendMj", toplayer )
 	end
 end
-
 
 --[[
 /////////////////////功能相关//////////////////////////

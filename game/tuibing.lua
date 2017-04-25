@@ -13,7 +13,7 @@ local table_remove = table.remove
 local player_list = {}
 local game_state_timer = 0
 local majiang = {0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9}
-
+local gm_control = {}
 local TuiBingState = {
 	Stop = 0, -- 未初始化
 	Begin = 1, -- 新游戏开始
@@ -64,6 +64,7 @@ local TuiBing = {
 function TuiBing:initGame()
 	self.result = {[1]={0,0},[2]={0,0},[3]={0,0},[4]={0,0}}
 	self.bet_info = { [1] = {}, [2] = {}, [3] = {},}
+	gm_control = {}
 end
 
 function TuiBing:initBanker()
@@ -328,11 +329,84 @@ local function getMajiang()
 		table_remove( tbl, i )
 		return n
 	end
-	local banker = { randomTbl(mj), randomTbl(mj) }
-	local sky = { randomTbl(mj), randomTbl(mj) }
-	local south = { randomTbl(mj), randomTbl(mj) }
-	local north = { randomTbl(mj), randomTbl(mj) }
-	return {banker, south, sky, north}
+	local result = {0,0,0,0}
+
+	local function removePoint( tbl, point )
+		local find = false
+		for k, p in pairs(tbl) do
+			if p == point then
+				table_remove( tbl, k )
+				find = true
+				break
+			end
+		end
+		return find
+	end
+
+	local lose_max = 9
+	local has_control = false
+	local function getAPoint( mix, max, p1, candoubel )
+		local p2 = -1
+		while p2 == -1 do
+			local random = math.random( mix, max )
+			p2 = random - p1
+			if p2 < 0 then
+				p2 = p2 + 10
+			end
+			if p1 == p2 then
+				if candoubel then
+				else
+					p2 = -1
+				end
+			end
+			if removePoint( mj , p2 ) then
+				
+			else
+				p2 = -1
+			end
+		end
+		return p2
+	end
+
+	for pos,iswin in pairs(gm_control) do
+		if iswin == 1 then
+			local p1 = randomTbl(mj)
+			local p2 = getAPoint( 7, 9, p1, true )
+			result[pos+1] = {p1, p2}
+			local max = p1 + p2
+			if max > 10 then
+				max = max - 10
+			end
+			lose_max = max - 1
+			has_control = true
+		end
+	end
+
+	
+	local p1 = randomTbl(mj)
+	local p2 = getAPoint( 4, lose_max, p1, not has_control )
+	result[1] = {p1, p2}
+	lose_max = p1 + p2 - 1 
+	if lose_max > 10 then
+		lose_max = lose_max - 10
+	end
+	lose_max = lose_max -1
+
+	for pos,iswin in pairs(gm_control) do
+		if iswin == 2 then
+			local p1 = randomTbl(mj)
+			local p2 = getAPoint( 0, lose_max, p1, false )
+			result[pos+1] = {p1, p2}
+		end
+	end
+
+	for i=1,4 do
+		if result[i] == 0 then
+			result[i] = { randomTbl(mj), randomTbl(mj) }
+		end
+	end
+
+	return result
 end
 
 function TuiBing:GameDeal()
@@ -869,6 +943,16 @@ function TuiBing:playerAllPlayer( pid )
 		return
 	end
 	self:sendToPlayer( sn, "ResTuiBingAllPlayer", toclient )
+end
+
+--[[
+	info 
+		player_id
+		pos
+		win 0 none 1 win 2 lose
+]]
+function TuiBing:gmControlWin( info )
+	gm_control[info.pos] = info.win
 end
 
 function TuiBing:sendToPlayer( sn, head, body )

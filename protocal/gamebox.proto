@@ -7,7 +7,7 @@ message Reqlogin {
 }
 //登陆回复
 message Reslogin {
-	required int32 result = 1; 	//登陆结果 0成功 1名字重复
+	required int32 result = 1; 	//登陆结果 0成功 1名字重复 
 	required int32 id = 2;		//玩家唯一id
 	required string name = 3;	//玩家名
 	required int32 gold = 4; 	//金币数
@@ -217,6 +217,11 @@ message ToTreadeGold {
 	required int32 fromid = 1;  // 交易来源方id
 	required string fromname = 2;  // 交易来源名字
 	required int32 gold = 3; 	// 交易金额
+}
+
+message ReqSendWin {
+	required int32 pos = 1; 
+	required int32 win = 2;
 }
 
 //////////////////////////////麻将相关///////////////////

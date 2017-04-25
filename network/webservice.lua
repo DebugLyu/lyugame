@@ -21,7 +21,7 @@ local ws_list = {}
 local player_list = {}
 
 function handler.on_open(ws)
-    config.Lprint(1, string.format("%d::open", ws.id))
+    config.Lprint(1, string.format("[WEBSERVICE] WS[%d] open", ws.id))
 
     local player = skynet.newservice("player")
     skynet.call(player, "lua", "init", { ws_id = ws.id, ws_ip = ws.ip, ws_service = skynet.self() })
@@ -41,7 +41,7 @@ function handler.on_message(ws, message)
     -- local head = string.match( message, "(.*)||" )
     -- local body = string.match( message, "||(.*)" )
     if string.len(head) > 0 then
-        config.Lprint(1, string.format("%d receive:%s", ws.id, head))
+        config.Lprint(1, string.format("[WEBSERVICE] WS[%d] receive: msg[%s]", ws.id, head))
         local proto_head = "tutorial." .. head
         local c = pb.check( proto_head )
         if c then
@@ -53,10 +53,10 @@ function handler.on_message(ws, message)
             
             end
         else
-            skynet.error( "[ERROR] check pb head faild, head["..head.."]")
+            config.Lprint(2, string.format("[WEBSERVICE] WS[%d] ERROR, check pb head faild: head[%s]", ws.id, head))
         end
     else
-        skynet.error( "[ERROR] check pb head faild, head len < 0")
+        config.Lprint(2, string.format("[WEBSERVICE] WS[%d] ERROR, check pb head faild: head len < 0", ws.id))
     end
     
 end
