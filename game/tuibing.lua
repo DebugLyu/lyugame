@@ -377,7 +377,10 @@ local function getMajiang()
 			if max > 10 then
 				max = max - 10
 			end
-			lose_max = max - 1
+			max = max - 1
+			if max < lose_max then
+				lose_max = max
+			end
 			has_control = true
 		end
 	end
