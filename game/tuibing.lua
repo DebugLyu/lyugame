@@ -28,7 +28,7 @@ local TuiBingState = {
 	Close = 8, -- 服务器关闭
 }
 
-local PlayerState = {
+local TuiBingPlayerState = {
 	Natural = 0, -- 正常
 	NotInRoom = 1, -- 不在房间
 	OffLine = 2, -- 离线
@@ -42,14 +42,14 @@ local TuiBing = {
 	banker_list = {}, 		-- 上庄队列
 	-- player_id, player_sn, player_name, gold 
 	fast_banker_list = {},	-- 优先上庄队列
-	state = TuiBingState.Unknow,
+	state = TuiBingState.Stop,
 	banker = {
 		player_id = 0, 
 		player_sn = 0, 
 		player_name = "", 
 		banker_times = 0,
 		banker_gold = 0,
-		banker_state = PlayerState.Unknow,
+		banker_state = TuiBingPlayerState.Natural,
 	},
 
 	bet_info = { -- 1 南 2 天 3 北
@@ -74,7 +74,7 @@ function TuiBing:initBanker()
 		player_name = "", 
 		banker_times = 0,
 		banker_gold = 0,
-		banker_state = PlayerState.Unknow,
+		banker_state = TuiBingPlayerState.Natural,
 	}
 end
 
@@ -254,7 +254,7 @@ function TuiBing:GameBegin()
 	if self.banker.banker_times < TuiBingConfig.BANKER_LIMIT_TIMES then
 		self.banker.banker_times = self.banker.banker_times + 1
 		-- 判断 庄家状态
-		if self.banker.banker_state == PlayerState.Natural then
+		if self.banker.banker_state == TuiBingPlayerState.Natural then
 			self:sendBankerInfo()
 			-- 判断 庄家剩余金币
 			if self.banker.banker_gold < TuiBingConfig.BANKER_LESS_GOLD then
@@ -292,7 +292,7 @@ function TuiBing:GameBegin()
 		else 
 			self:initBanker()
 			self:initGame()
-			self.state = TuiBingState.Unknow
+			self.state = TuiBingState.Stop
 		end
 	end )
 end
@@ -596,7 +596,7 @@ function TuiBing:BeBanker( info )
 		player_name = info.player_name, 
 		banker_times = 0,
 		banker_gold = info.gold,
-		banker_state = PlayerState.Natural,
+		banker_state = TuiBingPlayerState.Natural,
 	}
 
 	self:sendBankerQueueInfo()
@@ -711,7 +711,7 @@ function TuiBing:playerUnBanker( player_id )
 	config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d][%d] Player[%d] ask unBanker", 
 	 						self.room_id, self.game_serial, player_id ) )
 
-	self.banker.banker_state = PlayerState.UnBanker
+	self.banker.banker_state = TuiBingPlayerState.UnBanker
 	return 0
 end
 
@@ -755,13 +755,13 @@ function TuiBing:addPlayer( roleinfo )
 		return ErrorCode.TUIBING_ROOMCLOSE
 	end
 	if self.banker.player_id == roleinfo.player_id then
-		self.banker.banker_state = PlayerState.Natural
+		self.banker.banker_state = TuiBingPlayerState.Natural
 		self.banker.player_id = roleinfo.player_id
 		self.banker.player_sn = roleinfo.player_sn
 		self.banker.player_name = roleinfo.player_name
 	end
 	local info = roleinfo
-	info.state = PlayerState.Natural
+	info.state = TuiBingPlayerState.Natural
 	player_list[ roleinfo.player_id ] = roleinfo
 	config.Lprint( 1, string.format( "[TUIBINGINFO] TuiBing[%d] add Player[%d]", self.room_id, roleinfo.player_id) )
 	return 0
@@ -769,7 +769,7 @@ end
 
 function TuiBing:delPlayer( player_id )
 	if self.banker.player_id == player_id then
-		self.banker.banker_state = PlayerState.NotInRoom
+		self.banker.banker_state = TuiBingPlayerState.NotInRoom
 	end
 
 	self:playerLeaveQueue( player_id )
@@ -825,7 +825,7 @@ function TuiBing:plyaerKeepBanker( info )
 			self.state == TuiBingState.Begin_Check_Begin then
 			self:unBebanker()
 		else
-			self.banker.banker_state = PlayerState.UnBanker
+			self.banker.banker_state = TuiBingPlayerState.UnBanker
 		end
 	end
 end
@@ -968,34 +968,20 @@ function TuiBing:broatcast( head, body ) -- pkg:{head = "head", body = "body"}
 	end
 end
 
---[[check param t
-	1: game state
-	2 : banker info
-	2
+--[[
+	t
+	1: game info
 ]]
--- skynet.info_func(function( t )
--- 	print("t",type(t),tostring(t))
--- 	if t == nil then
--- 		return TuiBing.state
--- 	end
--- 	local cmd = tonumber(t) or 0
--- 	if cmd == 1 then
--- 		return TuiBing.state
--- 	elseif cmd == 2 then
--- 		return TuiBing.banker
--- 	else
--- 		return TuiBing.state
--- 	end
--- end)
-
 function TuiBing:check( t, ... )
 	if t == nil or t == 1 then
-		return "TuiBing.state = " .. TuiBing.state
+		local str = string.format( "TuiBing State[%d], South[%d], Sky[%d], North[%d], Banker[%s] state[%d] gold[%d] times[%d]", 
+					self.state, self:getBetTotalGold(1),self:getBetTotalGold(2),self:getBetTotalGold(3),
+					self.banker.player_name, self.banker.banker_state, self.banker.banker_gold, self.banker.banker_times )
+		return str
 	elseif t == 2 then
-		return TuiBing.banker
-	elseif t == 3 then
-		return player_list
+		return self.banker
 	end
+	return "error param"
 end
 
 function TuiBing:ServiceClose()

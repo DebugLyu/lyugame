@@ -22,6 +22,7 @@ GoldLog = {
 
 	TUIBING_SYSTEM_PRE = 888, 	-- 系统抽水
 	TUIBING_SYSTEM_TRADE_PRE = 889, 	-- 系统转账抽水
+	
 	GM_ADD = 900, 				-- 客户端GM添加
 	GM_ADD_PAYMENT = 901, 		-- 充值
 	GM_ADD_INSIDE = 902, 		-- 内部充值
@@ -68,7 +69,7 @@ TuiBingConfig = {
 	WAIT_OPENED = 11,-- 开牌展示时间
 	WAIT_REWARD = 9, -- 奖励发送时间
 
-	PERCENTAGE = 1 - 0.01, -- 系统抽水
+	PERCENTAGE = 1 - 0.02, -- 系统抽水
 }
 
 MahJongConfig = {
