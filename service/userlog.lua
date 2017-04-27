@@ -2,12 +2,24 @@
 	logger
 		save server runtime logs, save infomation into log file every 5 minutes
 		log from skynet.error
+
+		logs retained for 30 days 
 ]]
 local skynet = require "skynet"
 require "skynet.manager"
 
 local logtxt = ""
 local tmptxt = ""
+local lastlogday = 0
+
+function delete_file(day)
+	local c = os.execute( "rm -rf logs/"..day.."*" )
+	if c == nil or c == false then
+		skynet.error( string.format("[LOGINFO] delete day[%s] logs error", day) )
+		return 1
+	end
+	return 0
+end
 
 function write_file()
 	tmptxt = logtxt
@@ -16,12 +28,24 @@ function write_file()
 	if tmptxt == "" then
 		return
 	end
+	local cur_time = os.time()
+	local tmp = os.date( "%d", cur_time )
+	if lastlogday == 0 then
+		lastlogday = tmp
+	end
 
-	local name = os.date("%Y%m%d%H%M%S", os.time())
+	local name = os.date("%Y%m%d%H%M%S", cur_time)
 	local file = io.open( "logs/"..name..".log", "a+" )
 	file:write( tmptxt )
 	file:close()
 	tmptxt = ""
+
+	if lastlogday ~= tmp then
+		local t = cur_time - 30*24*60*60
+		local del_day = os.date("%Y%m%d", t)
+		delete_file(del_day)
+		lastlogday = tmp
+	end
 end
 
 skynet.register_protocol {

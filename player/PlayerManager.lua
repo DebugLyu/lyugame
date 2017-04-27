@@ -14,9 +14,7 @@ local player_list = {}
 local player_outline_pool = {}
 
 local CMD = {}
-
 local player_seed = 100000
-
 local SYSTEM_SEND_GOLD = "系统赠送"
 
 function relogin( name, p )
@@ -256,7 +254,7 @@ end
 --[[
 	call logger show unwrite logs
 ]]
-function CMD.detail( ... )
+function CMD.showlog( ... )
 	local ret = skynet.call(".logger", "lua", "show")
 	return ret	
 end
