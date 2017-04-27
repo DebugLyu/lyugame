@@ -109,7 +109,9 @@ function player:login( account, password )
 				-- 登陆成功
 				self:loginSuccess(ret.roleinfo)
 			else
-				skynet.send( sn, "lua", "otherLogin" )
+				local toother = {}
+				toother.ip = self.ws_ip
+				skynet.send( sn, "lua", "otherLogin", toother )
 				toclient.result = ErrorCode.HAS_ONLINE
 			end
 		else
@@ -471,9 +473,6 @@ function player:controlTuibing( pos, win )
 	toroom.pos = pos
 	toroom.win = win
 	skynet.send( room_sn, "lua", "gmControlWin", toroom )
-
-	config.Lprint( 1, string.format("[GMINFO] gm[%d] control Tuibing[%d] pos[%d] win[%d]:0 none, 1 win 2 lose",
-		self.id, self.room_info.room_id, pos, win ))
 end
 
 --[[ 麻将相关
@@ -511,9 +510,12 @@ function player:save()
 	skynet.send( ".DBService", "lua", "savePlayer", toDB )
 end
 
---[[ 他人登陆，本号被顶掉 ]]
-function player:otherLogin()
-	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] otherLogin!", self.id))
+--[[ 他人登陆，本号被顶掉 
+	info
+		ip
+]]
+function player:otherLogin( info )
+	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] from[%s] otherLogin!", self.id, info.ip ) )
 	local tootherclient = {}
 	tootherclient.type = 1
 	self:sendPacket( "ToCloseClient", tootherclient )
@@ -537,7 +539,6 @@ function CMD.init( conf )
 end
 
 function CMD.close()
-	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] close!", player.id))
 	skynet.send( ".PlayerManager", "lua", "delPlayer", player.id )
 
 	if player.room_info.room_id ~= 0 then
@@ -551,6 +552,7 @@ function CMD.close()
 	skynet.timeout(5*100, function( ... )
 		skynet.exit()	
 	end)
+	config.Lprint( 1, string.format("[PLAYERINFO] player[%d] close!", player.id))
 end
 
 skynet.start(function()

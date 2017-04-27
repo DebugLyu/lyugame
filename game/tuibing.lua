@@ -954,6 +954,9 @@ end
 ]]
 function TuiBing:gmControlWin( info )
 	gm_control[info.pos] = info.win
+	config.Lprint( 1, string.format("[GMINFO] gm[%d] control Tuibing[%d][%d] pos[%d] iswin[%d], now south[%d] sky[%d] north[%d]",
+		info.player_id, self.room_id, self.game_serial, info.pos, info.win, 
+		(gm_control[1] or 0), (gm_control[2] or 0), (gm_control[3] or 0) ))
 end
 
 function TuiBing:sendToPlayer( sn, head, body )
