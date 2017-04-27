@@ -43,7 +43,7 @@ function CMD.UserLogin( account, password )
 		end
 	else
 		ret.result = ErrorCode.DBSERVICE_ERROR
-		config.Lprint(2, string.format("[ERROR] DB Error, UserLogin failed, account =", account))
+		config.Lprint(2, string.format("[ERROR] DB Error, UserLogin failed, account[%s]", account))
 	end
 	return ret
 end

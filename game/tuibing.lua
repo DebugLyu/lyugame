@@ -86,12 +86,9 @@ function TuiBing:gameStart()
 		while true do
 			skynet.sleep( 100 ) -- 100 1s
 			self.running_time_ = self.running_time_ + 1
-			-- self:update()
-			-- config.Lprint( 1, "TuiBing GameState :", self.state )
 		end
 	end)
 	return 0
-	-- self.GameBegin()
 end
 
 -- 通知客户端游戏状态
@@ -439,7 +436,7 @@ function TuiBing:GameDeal()
 	end)
 end
 
-local function systemPreLog( id, pos, gold, serial )
+local function systemPreLog( id, gold, pos, serial )
 	local goldinfo = {}
 	goldinfo.player_id = 0
 	goldinfo.gold = gold
@@ -562,6 +559,7 @@ function TuiBing:GameReward()
 					goldinfo.player_id = player_id
 					goldinfo.gold = win_gold
 					goldinfo.logtype = GoldLog.TUIBING_PLAYER_WIN
+					goldinfo.param1 = gm_control[ pos ] or 0
 					goldinfo.param3 = self.game_serial
 					toAddGold( goldinfo )
 

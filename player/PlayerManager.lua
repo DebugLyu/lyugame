@@ -98,11 +98,11 @@ end
 ]]
 function CMD.changeGold(info)
 	if info.player_id == 0 then
-		config.Lprint( 2, "[ERROR] PlayerManager changeGold player[0] -- " .. debug.traceback() )
-		return -1
+		config.Lprint( 2, "[ERROR] PlayerManager changeGold player[0]" )
+		return ErrorCode.PARAM_ERROR 
 	end
 	if info.gold == 0 then
-		return 0
+		return ErrorCode.PARAM_ERROR 
 	end
 
 	info.param1 = info.param1 or 0

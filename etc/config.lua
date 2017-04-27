@@ -18,14 +18,7 @@ local config = {
 function config.Lprint( level, msg, ... )
 	if config.DebugLevel == 0 then return end
 	if level >= config.DebugLevel then 
-		local params = {...}
-		local param_str = ""
-		for k,v in ipairs(params) do
-			param_str = param_str .. "    " .. tostring(v)
-		end
-		-- print( "["..os.date("%Y-%m-%d %H:%M:%S", os.time()).."]", msg, ... )
-		
-		skynet.error( string.format( "%s %s", msg, param_str ) )
+		skynet.error( msg )
 	end
 end	
 
@@ -97,4 +90,9 @@ function config.Ldump( value, description )
 	    config.Lprint(1,line)
 	end
 end
+
+function config.Ltrace( msg )
+	skynet.error( debug.traceback(msg, 2) )
+end
+
 return config
