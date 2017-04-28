@@ -6,7 +6,7 @@ local datacenter = require "datacenter"
 skynet.start(function()
 	skynet.error("Server start")
 	-- start 启动控制台
-	skynet.newservice("debug_console",8000)
+	skynet.newservice("Lconsole",8003)
 	-- 启动websocket
 	local web_service = skynet.newservice( "webservice" )
 	-- 启动唯一服务 房间管理器

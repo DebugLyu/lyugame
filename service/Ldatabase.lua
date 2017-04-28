@@ -214,8 +214,27 @@ function CMD.savePlayer( info )
 	local res = CMD.run( sql )
 end
 
-function CMD.close()
-	
+local function checktask()
+	local n = skynet.mqlen()
+	if n > 0 then
+		return true
+	else
+		local topmgr = {}
+		topmgr.from = 2
+		skynet.send( ".PlayerManager", "lua", "ServerCloseBack", topmgr )
+		skynet.timeout(5*100, function( ... )
+			skynet.exit()   
+		end)
+		return false
+	end
+end
+
+function CMD.ServiceClose()
+	local hastask = true
+	while hastask do
+		hastask = checktask()
+		skynet.sleep(100)
+	end
 end
 
 skynet.start(function()

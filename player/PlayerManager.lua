@@ -1,4 +1,14 @@
 -- PlayerManager.lua
+--[[
+	PlayerManager works part-time as a service manager
+	function closeall
+	call the close function of other game service, service return back ServerCloseBack
+	after all service close, call all player beforeDisconnect to save data, 
+	and close player service, then exit self
+
+	function showlog 
+	logger service is implicit called service, use playermanager transfer command
+]]
 local skynet = require "skynet" 
 require "skynet.manager"
 
@@ -189,22 +199,11 @@ function CMD.kickPlayer( info )
 	end
 	return 0
 end
---[[
-	player manager part-time service manager
 
-	close function call other service close function, other service return back ServerCloseBack
-	after all service close, player manager save player data, and exit self
 
-	now has 
-]]
-function CMD.ServiceClose()
-	datacenter.set("ServerState", 0)
-	skynet.send( ".RoomManager", "lua", "ServiceClose" )
-	skynet.send( web_service, "lua", "ServiceClose" )
-	return 0
-end
 
-function checkPlayer()
+------------------------service manager-----------------------------
+local function checkPlayer()
 	local canclose = true
 	for k,v in pairs(player_list) do
 		if v then
@@ -213,8 +212,9 @@ function checkPlayer()
 	end
 	if canclose then
 		skynet.send( ".logger", "lua", "flush" )
+		skynet.send( ".Console", "lua", "BroadCastClose", "lyugame will shut down in 5 seconds" )
 		skynet.timeout(5*100, function( ... )
-			skynet.exit()	
+			skynet.abort()	
 		end)
 	else
 		skynet.timeout(5*100, function( ... )
@@ -223,7 +223,7 @@ function checkPlayer()
 	end
 end
 
-function ServiceExit( ... )
+local function ServiceExit( ... )
 	for id,p in pairs( player_list ) do
 		skynet.call( p.player_sn, "lua", "beforeDisconnect" )
 	end
@@ -235,21 +235,48 @@ end
 		from 
 			1 RoomManager
 			2 WebService
+			3 Ldatabase
+			...
 	Ldatabase exit by debug console
 ]]
-local service_list = { [1] = false, [2] = false, }
+local ServiceState = {
+	Opened = 1,
+	Closing = 2,
+	Closed = 3,
+}
+local service_list = { 
+	[1] = {id = 0, name = ".RoomManager", state = ServiceState.Opened, }, 
+	[2] = {id = 0, name = ".DBService", state = ServiceState.Opened, }, 
+	[3] = {id = web_service, name = "web_service", state = ServiceState.Opened, }, 
+}
+
 function CMD.ServerCloseBack(info)
-	service_list[info.from] = true
+	service_list[info.from].state = ServiceState.Closed
+	skynet.send( ".Console", "lua", "BroadCastClose", service_list[info.from].name )
 
 	local canclose = true
-	for k,v in pairs(service_list) do
-		if v == false then
+	for key, info in pairs(service_list) do
+	print( info.name, info.state )
+		if info.state ~= ServiceState.Closed then
 			canclose = false
+			break
 		end
 	end
 	if canclose then
 		ServiceExit()
 	end
+end
+
+--[[
+	closeall function is close all game logic service.
+]]
+function CMD.closeall()
+	datacenter.set("ServerState", 0)
+	for key, info in pairs( service_list )do
+		local addr = info.id ~= 0 and info.id or info.name
+		skynet.send( addr, "lua", "ServiceClose" )
+	end
+	return 0
 end
 --[[
 	call logger show unwrite logs
