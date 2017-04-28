@@ -122,9 +122,9 @@ local function console_main_loop(stdin, print)
 end
 
 local LUACMD = {}
-function LUACMD.BroadCastClose( name )
+function LUACMD.BroadCastClose( msg )
     for id , info in pairs( ConnectList ) do
-        socket.write(id, string.format(" Service[%s] is closed", tostring( name )))
+        socket.write(id, tostring( msg ))
         socket.write(id, "\n")
     end
 end

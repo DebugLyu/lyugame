@@ -211,10 +211,9 @@ local function checkPlayer()
 		end
 	end
 	if canclose then
-		skynet.send( ".logger", "lua", "flush" )
 		skynet.send( ".Console", "lua", "BroadCastClose", "lyugame will shut down in 5 seconds" )
 		skynet.timeout(5*100, function( ... )
-			skynet.abort()	
+			skynet.abort()
 		end)
 	else
 		skynet.timeout(5*100, function( ... )
@@ -224,10 +223,12 @@ local function checkPlayer()
 end
 
 local function ServiceExit( ... )
+	skynet.send( ".Console", "lua", "BroadCastClose", "saving player data" )
 	for id,p in pairs( player_list ) do
 		skynet.call( p.player_sn, "lua", "beforeDisconnect" )
 	end
-	
+	-- save log data
+	skynet.send( ".logger", "lua", "flush" )
 	checkPlayer()
 end
 --[[
@@ -252,7 +253,8 @@ local service_list = {
 
 function CMD.ServerCloseBack(info)
 	service_list[info.from].state = ServiceState.Closed
-	skynet.send( ".Console", "lua", "BroadCastClose", service_list[info.from].name )
+	local msg = string.format( "Service[%s] is closed", service_list[info.from].name )
+	skynet.send( ".Console", "lua", "BroadCastClose", msg )
 
 	local canclose = true
 	for key, info in pairs(service_list) do
