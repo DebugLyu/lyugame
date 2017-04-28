@@ -185,7 +185,7 @@ function CMD.broadcast( t, pkg )
 end
 
 function CMD.test_1( ... )
-	print("aaaaaaaaaa")
+	return "aaaaaaaaaaa"
 end
 
 --[[
@@ -258,7 +258,6 @@ function CMD.ServerCloseBack(info)
 
 	local canclose = true
 	for key, info in pairs(service_list) do
-	print( info.name, info.state )
 		if info.state ~= ServiceState.Closed then
 			canclose = false
 			break

@@ -118,7 +118,7 @@ local function console_main_loop(stdin, print)
 	skynet.error(stdin, "disconnected")
 	socket.close(stdin)
 
-    ConnectList[id] = nil
+    ConnectList[stdin] = nil
 end
 
 local LUACMD = {}
