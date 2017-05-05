@@ -19,6 +19,19 @@ message ReqRegister {
 	required string account = 1;	//账号
 	required string password = 2;	//密码
 }
+
+// 获取手机验证码
+message ReqSendCheck {
+	required string phonenum = 1; //手机号
+}
+
+// 手机注册请求
+message ReqRegisterPhone {
+	required string phonenum = 1; //手机号
+	required string password = 2; //密码
+	required string checknum = 3; //验证码
+}
+
 // 注册回复
 message ResRegister {
 	required int32 result = 1; 	//注册结果

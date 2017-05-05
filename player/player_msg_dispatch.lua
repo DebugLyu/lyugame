@@ -5,10 +5,16 @@ require "skynet.manager"
 local md5 = require "md5"
 require "gameconfig"
 
+local httpc = require "http.httpc"
+local dns = require "dns"
+
 local MSG = {}
 local config = require "config"
--- local pb = ...
 
+local phone_register = {
+	phone = 0,
+	check = 0,
+}
 function login( pack )
 	-- print("pack", type(pack), pack)
 	local account = pack.account or ""
@@ -21,20 +27,41 @@ function login( pack )
 	player:login( account, password )
 end
 
-function register( pack )
-	local account = pack.account
-	local password = pack.password
+function registerToDb( account, password )
 	password = md5.sumhexa( password )
-
 	local ret = skynet.call( ".DBService", "lua", "UserRegister", account, password )
 	if ret.result ~= 0 then
 		local tbl = {}
 		tbl.result = ret.result
 		player:sendPacket( "ResRegister", tbl )
-		config.Lprint(1, string.format("[INFO] register failed, account[%s], result[%d]", account, ret.result))
+		config.Lprint(1, string.format("[INFO] register failed, account[%s], result[%d]", account, tbl.result))
 	else
 		player:loginSuccess( ret.roleinfo )
 	end
+end
+
+function register( pack )
+	local account = pack.account
+	local password = pack.password
+	registerToDb( account, password )
+end
+
+function registerphone( pack )
+	local phonenum = pack.phonenum
+	local password = pack.password
+	local checknum = pack.checknum
+	for i, v in pairs(phone_register)do
+		print(i,v)
+	end
+	if phone_register.phone ~= phonenum or phone_register.check ~= checknum then
+		local tbl = {}
+		tbl.result = ErrorCode.PHONE_CHECK_ERROR
+		config.Lprint(1, string.format("[INFO] register failed, account[%s], result[%d]", phonenum, tbl.result))
+		player:sendPacket( "ResRegister", tbl )
+		return 
+	end
+
+	registerToDb( phonenum, password )
 end
 
 function enterroom( pack )
@@ -137,12 +164,38 @@ function sendwin( pack )
 	player:controlTuibing( pos, win )
 end
 
+function sendcheck( pack )
+	local phonenum = pack.phonenum
+
+	httpc.dns()	-- set dns server
+	httpc.timeout = 300	-- set timeout 1 second
+
+	local respheader = {}
+	local checknum = math.random( 100000, 999999 )
+	local checkstr = "/sms/send?mobile=".. phonenum .."&tpl_id=33286&tpl_value=%2523code%2523%253d".. checknum .."&dtype=&key=b498928e0a34704362c9010ec2ad3360"
+	print( checkstr )
+	-- local status, body = httpc.get("v.juhe.cn/sms", checkstr, respheader)
+	local status, body = httpc.get("v.juhe.cn", checkstr, respheader)
+	print("[header] =====>")
+	for k,v in pairs(respheader) do
+		print(k,v)
+	end
+	print("[body] =====>", status)
+	print(body)
+	
+	
+	phone_register.phone = phonenum
+	phone_register.check = tostring(checknum)
+end
+
 MSG = {
 	["Reqlogin"] = login,
 	["ReqRegister"] = register,
 	["ReqEnterRoom"] = enterroom,
 	["ReqLeaveRoom"] = leaveroom,
 	["ReqCheckName"] = getplayername,
+	["ReqSendCheck"] = sendcheck,
+	["ReqRegisterPhone"] = registerphone,
 	-- 交互
 	["ReqTradeGold"] = tradegold,
 	-- 推饼相关

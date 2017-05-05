@@ -9,6 +9,7 @@ ErrorCode.HAS_ONLINE = 103 				-- 已经在线，请稍后重试
 ErrorCode.NO_USER_ID = 105 				-- 用户ID不存在
 ErrorCode.NOT_ONLINE = 106 				-- 用户不在线，无法操作
 ErrorCode.ACCOUNT_SEAL = 107 			-- 账号被禁用，解禁日期为
+ErrorCode.PHONE_CHECK_ERROR = 108 		-- 手机验证码检测失败
 
 
 ErrorCode.ROOM_NOT_FOUND = 201 			-- 未找到该房间

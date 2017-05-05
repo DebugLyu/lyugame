@@ -185,10 +185,10 @@ function CMD.broadcast( t, pkg )
 end
 
 function CMD.test_1( ... )
-	return "aaaaaaaaaaa"
+	return "this is a test"
 end
 
---[[
+--[[forced player offline
 	info 
 		player_id
 ]]	

@@ -13,7 +13,6 @@ skynet.start(function()
 	skynet.uniqueservice "RoomManager"
 	-- 启动唯一服务 玩家管理器
 	skynet.uniqueservice("PlayerManager", web_service)
-
 	-- 启动唯一服务 DB服务
 	skynet.uniqueservice "Ldatabase"
 
