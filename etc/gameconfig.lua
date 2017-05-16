@@ -20,6 +20,8 @@ GoldLog = {
 	USER_TRADE = 9, 			-- 交易获得
 	USER_TRADE_BACK = 10, 		-- 交易回滚，出现在交易失败的情况下
 
+	PHONE_REGISTER = 11, 		-- 手机注册赠送
+
 	TUIBING_SYSTEM_PRE = 888, 	-- 系统抽水
 	TUIBING_SYSTEM_TRADE_PRE = 889, 	-- 系统转账抽水
 	
@@ -42,6 +44,7 @@ GMGoldTypeToLog = {
 	[ GMGoldType.PERSENT ] = GoldLog.GM_ADD_PERSENT,
 }
 
+PHONE_REGISTER_GOLD = 50000 -- 手机注册 赠送金币
 GM_ADD_GOLD_LEVEL = 1
 GLOBAL_MAX_GOLD = 2000000000
 TRADE_PERCENTAGE = 1 -- 系统转账抽水

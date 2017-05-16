@@ -37,8 +37,9 @@ function player:sendPacket( head, tbl )
 	end
 end
 
-function player:loginSuccess( roleinfo )
+function player:loginSuccess( roleinfo, regtype )
 	config.Ldump( roleinfo, "player.loginSuccess.roleinfo" )
+	-- check seal acctount
 	if roleinfo.state == PlayerState.Seal then
 		if tonumber(roleinfo.statedate) > os.time() then
 			-- seal time
@@ -84,6 +85,14 @@ function player:loginSuccess( roleinfo )
 	self:sendPacket( "Reslogin", toclient )
 
 	config.Lprint(1, string.format("[PLAYERINFO] player[%d] from ip[%s] loginSuccess", self.id, self.ws_ip))
+
+	if regtype == 2 then
+		local infoself = {}
+		infoself.player_id = self.id
+		infoself.gold = PHONE_REGISTER_GOLD
+		infoself.logtype = GoldLog.PHONE_REGISTER
+		self:addGold( infoself )
+	end
 end
 
 function player:login( account, password )

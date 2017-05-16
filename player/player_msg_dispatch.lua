@@ -27,7 +27,7 @@ function login( pack )
 	player:login( account, password )
 end
 
-function registerToDb( account, password )
+function registerToDb( account, password, regtype )
 	password = md5.sumhexa( password )
 	local ret = skynet.call( ".DBService", "lua", "UserRegister", account, password )
 	if ret.result ~= 0 then
@@ -36,23 +36,21 @@ function registerToDb( account, password )
 		player:sendPacket( "ResRegister", tbl )
 		config.Lprint(1, string.format("[INFO] register failed, account[%s], result[%d]", account, tbl.result))
 	else
-		player:loginSuccess( ret.roleinfo )
+		player:loginSuccess( ret.roleinfo, regtype )
 	end
 end
 
 function register( pack )
 	local account = pack.account
 	local password = pack.password
-	registerToDb( account, password )
+	registerToDb( account, password, 1 )
 end
 
 function registerphone( pack )
 	local phonenum = pack.phonenum
 	local password = pack.password
 	local checknum = pack.checknum
-	for i, v in pairs(phone_register)do
-		print(i,v)
-	end
+
 	if phone_register.phone ~= phonenum or phone_register.check ~= checknum then
 		local tbl = {}
 		tbl.result = ErrorCode.PHONE_CHECK_ERROR
@@ -61,7 +59,7 @@ function registerphone( pack )
 		return 
 	end
 
-	registerToDb( phonenum, password )
+	registerToDb( phonenum, password, 2 )
 end
 
 function enterroom( pack )
@@ -173,17 +171,8 @@ function sendcheck( pack )
 	local respheader = {}
 	local checknum = math.random( 100000, 999999 )
 	local checkstr = "/sms/send?mobile=".. phonenum .."&tpl_id=33286&tpl_value=%2523code%2523%253d".. checknum .."&dtype=&key=b498928e0a34704362c9010ec2ad3360"
-	print( checkstr )
 	-- local status, body = httpc.get("v.juhe.cn/sms", checkstr, respheader)
 	local status, body = httpc.get("v.juhe.cn", checkstr, respheader)
-	print("[header] =====>")
-	for k,v in pairs(respheader) do
-		print(k,v)
-	end
-	print("[body] =====>", status)
-	print(body)
-	
-	
 	phone_register.phone = phonenum
 	phone_register.check = tostring(checknum)
 end

@@ -481,14 +481,15 @@ function TuiBing:GameReward()
 		return 0
 	end
 	local function pos_win( pos ) -- pos 1 南 2 天 3 北
-		local infotbl = self.bet_info[ pos ]
-		local gold_count = 0
-		if infotbl then
-			for player_id,gold in pairs(infotbl) do
-				gold_count = gold_count + gold
-			end
-		end
+		if pos > 3 or pos < 1 then return end
+		local gold_count = self:getBetTotalGold(pos)
 		if gold_count > 0 then
+			if gold_count > self.banker.banker_gold then
+				config.Lprint( 1, string.format( "[ERROR] TuiBing[%d][%d] pos[%d] bet gold[%d] more than banker gold[%d]", 
+					self.room_id, self.game_serial, pos, gold_count, self.banker.banker_gold) )
+				self.banker.banker_gold = 0
+				return 1
+			end
 			self.banker.banker_gold = self.banker.banker_gold - gold_count
 		end 
 		return 1
@@ -847,8 +848,10 @@ function TuiBing:getBetTotalGold( pos )
 		end
 	else
 		local list = self.bet_info[ pos ]
-		for id, g in pairs(list) do
-			gold = gold + g
+		if list then
+			for id, g in pairs(list) do
+				gold = gold + g
+			end
 		end
 	end
 	return gold
