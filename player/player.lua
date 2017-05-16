@@ -4,6 +4,8 @@ local skynet = require( "skynet" )
 local pb = require "protobuf"
 local parser = require "parser"
 local config = require "config"
+local queue = require "skynet.queue"
+local cs = queue()
 
 require "errorcode"
 require "gameconfig"
@@ -30,6 +32,7 @@ end
 function player:sendPacket( head, tbl )
 	local code = MSG.Package( head, tbl )
 	if code then
+
 		local lh = string.len( head )
 		local lc = string.len( code )
 		local send = string.pack( ">Hc"..lh.."c"..lc, lh, head, code )	
@@ -136,14 +139,21 @@ function player:login( account, password )
 end
 
 function player:trade( id, gold )
+
+	local toclient = {}
+	toclient.result = 0
+	if self.gold < gold then
+		toclient.result =  ErrorCode.GOLD_NOT_ENOUGH
+		self:sendPacket( "ResTradeGold", toclient )
+		return
+	end
+
 	local infoself = {}
 	infoself.player_id = self.id
 	infoself.gold = -gold
 	infoself.logtype = GoldLog.USER_TRADE
 	infoself.param1 = id
 
-	local toclient = {}
-	toclient.result = 0
 	local retself = self:addGold( infoself )
 
 	if retself == 0 then
@@ -301,7 +311,7 @@ end
 ]]
 function player:addGold( info )
 	local gold = info.gold 
-	if gold < 0 and self.gold < gold then
+	if gold < 0 and self.gold < math.abs( gold ) then
 		return ErrorCode.GOLD_NOT_ENOUGH
 	end
 	config.Ldump( info, "player.addGold.info" )
@@ -320,8 +330,8 @@ function player:addGold( info )
 	-- 记录日志
 	info.player_id = info.player_id or self.id
 	skynet.call( ".DBService", "lua", "PlayerAddGoldLog", info )
-	config.Lprint(1, string.format("[PLAYERINFO] player[%d] add gold[%d], before[%d], now[%d]", 
-		self.id, gold, before_gold, self.gold ))
+	config.Lprint(1, string.format("[PLAYERINFO] player[%d] add gold[%d], add type[%d] before[%d], now[%d]", 
+		self.id, gold, info.logtype, before_gold, self.gold ))
 	return 0
 end
 
@@ -571,15 +581,18 @@ skynet.start(function()
     	-- 注意命令方法 不要跟消息方法 重名，否则将会出错
 		local f = CMD[command]
 		if f then
-			skynet.ret(skynet.pack(f(...)))
+			local r = cs( f, ... )
+			skynet.ret(skynet.pack(r))
 		end
 		local cmsg = MSG[ command ]
 		if cmsg then
 			MSG.MessageDispatch( command, ... )
+			-- cs(MSG.MessageDispatch, command, ...)
 		end
 		local p = player[ command ]
 		if p then
-			skynet.ret(skynet.pack(p(player, ... )))
+			local r = cs( p, player, ... )
+			skynet.ret(skynet.pack(r))
 		end
 	end)
 	

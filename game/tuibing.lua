@@ -1,6 +1,7 @@
 -- tuibing.lua
 local skynet = require "skynet"
 local config = require "config"
+local queue = require "skynet.queue"
 
 require "functions"
 require "gameconfig"
@@ -9,6 +10,7 @@ require "errorcode"
 local talbe_insert = table.insert
 local table_remove = table.remove
 
+local cs = queue()
 -- player : player_id player_sn player_gold
 local player_list = {}
 local game_state_timer = 0
@@ -95,6 +97,7 @@ end
 function TuiBing:sendGameState( sn )
 	local toclient = {}
 	toclient.state = self.state
+	
 	if sn then
 		self:sendToPlayer( sn, "ToTuiBingGameState", toclient )
 	else
@@ -871,6 +874,7 @@ end
 	pos
 	gold
 ]]
+local a = 1
 function TuiBing:playerBet( info )
 	if info.player_id == self.banker.player_id then
 		return ErrorCode.BANKER_NO_BET
@@ -1002,7 +1006,7 @@ end
 skynet.start(function(  )
 	skynet.dispatch( "lua", function(_,_, command, ...)
 		local f = TuiBing[command]
-		local r = f(TuiBing,...)
+		local r = cs(f, TuiBing, ... )
 		if r then
 			skynet.ret(skynet.pack(r))
 		end
