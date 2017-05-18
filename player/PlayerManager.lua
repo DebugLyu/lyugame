@@ -247,8 +247,8 @@ local ServiceState = {
 }
 local service_list = { 
 	[1] = {id = 0, name = ".RoomManager", state = ServiceState.Opened, }, 
-	[2] = {id = 0, name = ".DBService", state = ServiceState.Opened, }, 
-	[3] = {id = web_service, name = "web_service", state = ServiceState.Opened, }, 
+	-- [2] = {id = 0, name = ".DBService", state = ServiceState.Opened, }, 
+	[2] = {id = web_service, name = "web_service", state = ServiceState.Opened, }, 
 }
 
 function CMD.ServerCloseBack(info)

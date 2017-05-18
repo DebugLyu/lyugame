@@ -110,16 +110,18 @@ function TuiBing:findBanker()
 	-- 优先上庄队列
 	local p = self.fast_banker_list[1]
 	if p then
-		self.fast_banker_list[1] = nil
-		table_remove( self.fast_banker_list, 1 )
-		return p
+		if player_list[ p.player_id ] then 
+			table_remove( self.fast_banker_list, 1 )
+			return p
+		end
 	end
 	-- 普通上庄队列
 	p = self.banker_list[1]
 	if p then
-		self.banker_list[1] = nil
-		table_remove( self.banker_list, 1 )
-		return p
+		if player_list[ p.player_id ] then 
+			table_remove( self.banker_list, 1 )
+			return p
+		end
 	end
 	return nil
 end
@@ -322,15 +324,33 @@ end
 
 local function getMajiang()
 	local mj = clone( majiang )
-	
+	local result = {0,0,0,0}
+
 	local function randomTbl( tbl )
 		local i = math.random(1, #tbl)
 		local n = tbl[ i ]
 		table_remove( tbl, i )
 		return n
 	end
-	local result = {0,0,0,0}
 
+	-- 如果没有被控制 直接随4个
+	local allcheckcontrol = false
+	for pos,iswin in pairs(gm_control) do
+		if iswin == 1 or iswin == 2 then
+			allcheckcontrol = true
+		end
+	end
+
+	if allcheckcontrol == false then
+		for i=1,4 do
+			if result[i] == 0 then
+				result[i] = { randomTbl(mj), randomTbl(mj) }
+			end
+		end
+		return result
+	end
+
+	-- 有控制的话
 	local function removePoint( tbl, point )
 		local find = false
 		for k, p in pairs(tbl) do
@@ -385,7 +405,6 @@ local function getMajiang()
 		end
 	end
 
-	
 	local p1 = randomTbl(mj)
 	local p2 = getAPoint( 4, lose_max, p1, not has_control )
 	result[1] = {p1, p2}
@@ -735,7 +754,7 @@ function TuiBing:playerLeaveQueue( player_id )
 		end
 	end
 	checklist( self.fast_banker_list, player_id )
-	if not changed then checklist( self.banker_list, player_id ) end
+	checklist( self.banker_list, player_id )
 
 	if changed then
 		self:sendBankerQueueInfo()

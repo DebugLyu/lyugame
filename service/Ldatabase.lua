@@ -47,9 +47,14 @@ function CMD.UserLogin( account, password )
 	end
 	return ret
 end
-
-function CMD.UserRegister( account, password )
-	local sql = string.format( sqls[ "login" ], account ) 
+--[[
+	info
+		account
+		password
+		name
+]]
+function CMD.UserRegister( info )
+	local sql = string.format( sqls[ "login" ], info.account ) 
 	local res = CMD.run( sql )
 
 	local ret = {}
@@ -59,7 +64,7 @@ function CMD.UserRegister( account, password )
 
 	if type( res ) == "table" then
 		if #res == 0 then
-			sql = string.format( sqls[ "register" ], account, account, password, account )
+			sql = string.format( sqls[ "register" ], info.account, info.name, info.password, info.account )
 			res = CMD.run( sql )
 			if res.mulitresultset == true then
 				ret.roleinfo = res[2][1]
@@ -70,7 +75,7 @@ function CMD.UserRegister( account, password )
 		end
 	else
 		ret.result = ErrorCode.DBSERVICE_ERROR
-		config.Lprint(2, string.format("[ERROR] DB Error, UserRegister failed, account =", account))
+		config.Lprint(2, string.format("[ERROR] DB Error, UserRegister failed, account =", info.account))
 	end
 	
 	return ret

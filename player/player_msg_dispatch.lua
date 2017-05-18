@@ -29,7 +29,16 @@ end
 
 function registerToDb( account, password, regtype )
 	password = md5.sumhexa( password )
-	local ret = skynet.call( ".DBService", "lua", "UserRegister", account, password )
+	local todb = {}
+	todb.account = account
+	todb.password = password
+	todb.name = account
+	if regtype == 2 then
+		local name = account
+		name = string.sub( name, 1, 3) .. "****" .. string.sub( name, -4 )
+		todb.name = name
+	end
+	local ret = skynet.call( ".DBService", "lua", "UserRegister", todb )
 	if ret.result ~= 0 then
 		local tbl = {}
 		tbl.result = ret.result

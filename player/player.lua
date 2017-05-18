@@ -249,6 +249,9 @@ function player:enterRoom( room_id )
 end
 
 function player:leaveRoom()
+	if self.room_info.room_id == 0 then
+		return 
+	end
 	local toroommanager = {
 		room_id = self.room_info.room_id,
 		player_id = self.id
@@ -561,10 +564,7 @@ function CMD.close()
 	skynet.send( ".PlayerManager", "lua", "delPlayer", player.id )
 
 	if player.room_info.room_id ~= 0 then
-		local toroommanager = {}
-		toroommanager.player_id = player.id
-		toroommanager.room_id = player.room_info.room_id
-		skynet.call( ".RoomManager", "lua", "PlayerLevelRoom", toroommanager )
+		player:leaveRoom()
 	end
 
 	player:save()

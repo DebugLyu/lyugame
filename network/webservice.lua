@@ -102,7 +102,7 @@ function CMD.ServiceClose( ... )
     end
 
     local topmgr = {}
-    topmgr.from = 3
+    topmgr.from = 2
     skynet.send( ".PlayerManager", "lua", "ServerCloseBack", topmgr )
 
     skynet.timeout(5*100, function( ... )

@@ -1,5 +1,5 @@
 -- main.lua
-local skynet = require("skynet")
+local skynet = require("Lskynet")
 local lpbc = require("protobuf")
 local datacenter = require "datacenter"
 
@@ -22,7 +22,10 @@ skynet.start(function()
 	-- 	maxclient = 5,
 	-- 	nodelay = true,
 	-- })
-	skynet.send(".RoomManager", "lua", "CreateTuiBing")
+	skynet.uniqueservice "Lcall"
+
+	-- skynet.send(".RoomManager", "lua", "CreateTuiBing")
+	skynet.lcall( ".RoomManager", "CreateTuiBing" )
 
 	skynet.newservice( "httpdservice" )
 
